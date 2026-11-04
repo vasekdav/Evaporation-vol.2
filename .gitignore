@@ -4,3 +4,6 @@ coverage/
 __pycache__/
 *.pyc
 .venv/
+
+# snímky obrazovky z ladění
+/*.png
