@@ -1,0 +1,21 @@
+{
+  "_note": "Ilustrace z katalogu – výběr a garance výrobce. Kapacity v Nm³/h za katalogových podmínek daného základu. LIN a LOX se mezi sebou nepřepočítávají.",
+  "sets": [
+    {
+      "id": "chart-supergap-eu",
+      "basisId": "chart-supergap-eu",
+      "source": "https://files.chartindustries.com/ThermafinSuperGapEurope.pdf",
+      "models": [
+        { "model": "SG270HF", "LOX": 710,  "LIN": 770,  "area_m2": 202, "height_m": 5.69 },
+        { "model": "SG320HF", "LOX": 830,  "LIN": 900,  "area_m2": 243, "height_m": 5.70 },
+        { "model": "SG360HF", "LOX": 920,  "LIN": 1000, "area_m2": 270, "height_m": 7.2 },
+        { "model": "SG430HF", "LOX": 1100, "LIN": 1200, "area_m2": 324, "height_m": 7.2 },
+        { "model": "SG500HF", "LOX": 1290, "LIN": 1400, "area_m2": 378, "height_m": 7.2 },
+        { "model": "SG580HF", "LOX": 1470, "LIN": 1600, "area_m2": 431, "height_m": 7.2 },
+        { "model": "SG670HF", "LOX": 1750, "LIN": 1900, "area_m2": 503, "height_m": 7.2 },
+        { "model": "SG770HF", "LOX": 2020, "LIN": 2200, "area_m2": 575, "height_m": 7.2 },
+        { "model": "SG860HF", "LOX": 2300, "LIN": 2500, "area_m2": 647, "height_m": 7.2 }
+      ]
+    }
+  ]
+}

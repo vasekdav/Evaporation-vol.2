@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  core:
+    name: Jádro – typy a testy (kap. 9)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  tables:
+    name: Tabulky odpovídají CoolProp 7.2.0
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r tools/requirements.txt
+      - run: python3 tools/gen_tables.py --check

@@ -1,0 +1,35 @@
+{
+  "_note": "ILUSTRATIVNÍ ÚDAJE VÝROBCŮ. Editovatelné. Vždy ověř v aktuálním katalogu; výběr a garance patří výrobci.",
+  "bases": [
+    {
+      "id": "chart-supergap-eu",
+      "name": "Chart Thermafin SuperGap EU",
+      "manufacturer": "Chart Industries",
+      "T_amb_C": 20,
+      "RH_pct": 75,
+      "pressure": { "value": 15, "kind": "gauge" },
+      "approach_K": 10,
+      "runtime_h": 8,
+      "wind_m_s": null,
+      "hpLinedFactor": 0.8,
+      "note": "Katalogové podmínky: 20 °C, 75 % RH, 15 bar(g), přiblížení výstupní teploty k okolí 10 °C, 8 h provozu. HP lined jednotky ×0,8 pro LIN/LOX/LAR. Tlak 15 bar je přetlak: jen s 16,01325 bar a vychází UA₁ = 1,5229 (O₂) / 1,4503 (N₂) W/K na Nm³/h.",
+      "source": "https://files.chartindustries.com/ThermafinSuperGapEurope.pdf",
+      "modelsId": "chart-supergap-eu"
+    },
+    {
+      "id": "tekoma-cryonorm",
+      "name": "Tekoma / Cryonorm",
+      "manufacturer": "Tekoma / Cryonorm",
+      "T_amb_C": 4,
+      "RH_pct": 75,
+      "pressure": null,
+      "approach_K": null,
+      "runtime_h": 8,
+      "wind_m_s": 1,
+      "hpLinedFactor": null,
+      "note": "Katalogové podmínky: +4 °C, 75 % RH, vzduch 1 m/s, 8 h. Tlak a přiblížení výstupní teploty nejsou v podkladu uvedeny – pro výpočet UA₁ je doplň z datasheetu výrobce.",
+      "source": "https://www.genemco.com/cdn/shop/files/RCJF1518Btekomavaporizer.pdf",
+      "modelsId": null
+    }
+  ]
+}
