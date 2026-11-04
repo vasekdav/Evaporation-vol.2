@@ -1030,3 +1030,215 @@ td {
   font-size: 0.8rem;
   color: var(--muted);
 }
+
+/* ================================================================ fáze 4 */
+:root {
+  --calc: #1f5fa8;
+  --calc-bg: #e3eefb;
+  --practice: #1e7a3c;
+  --practice-bg: #e2f4e8;
+  --reality: #b5520f;
+  --reality-bg: #fdeee2;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --calc: #8dbbf2;
+    --calc-bg: #1d3350;
+    --practice: #7fd39a;
+    --practice-bg: #173826;
+    --reality: #f4a46b;
+    --reality-bg: #3f2716;
+  }
+}
+.tabs {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.tabs button {
+  white-space: nowrap;
+}
+.notice {
+  margin: 8px var(--gap) 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--info-bg);
+  color: var(--info);
+}
+.notice.err {
+  background: var(--err-bg);
+  color: var(--err);
+}
+.export-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.export-msg {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.export-msg.err {
+  color: var(--err);
+}
+.small {
+  font-size: 0.78rem;
+}
+.src-DOPLNIT {
+  color: var(--err);
+  background: var(--err-bg);
+  text-decoration: none;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* poptávka */
+.inquiry,
+.info-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.inquiry .status {
+  margin-top: 10px;
+}
+.mismatch {
+  margin: 8px 0 0;
+  font-size: 0.88rem;
+}
+.inq-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr);
+  gap: 12px 24px;
+}
+@media (max-width: 760px) {
+  .inq-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.inq-grid h3 {
+  margin-top: 0;
+}
+.inq-field {
+  margin-bottom: 10px;
+}
+.inq-field-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+  margin-bottom: 3px;
+}
+.inq-field-head label {
+  font-weight: 500;
+}
+.inq-field.todo .text-input {
+  border-color: var(--err);
+  border-style: dashed;
+}
+.why-box {
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-radius: 6px;
+  font-size: 0.88rem;
+  align-self: start;
+}
+.why-box p {
+  margin: 4px 0 0;
+}
+
+/* postup návrhu */
+.guide {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.guide-step h3 {
+  margin-top: 0;
+}
+.step-no {
+  display: inline-block;
+  min-width: 2em;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--surface);
+  text-align: center;
+}
+.guide-dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 2px 12px;
+  margin: 8px 0;
+  font-size: 0.9rem;
+}
+.guide-dl dt {
+  color: var(--muted);
+  font-weight: 600;
+}
+.guide-dl dd {
+  margin: 0;
+}
+.guide-dl .mistake {
+  color: var(--err);
+}
+
+/* výpočet × praxe × realita */
+.three-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--gap);
+}
+.three-col h3 {
+  margin: 0;
+}
+.col-sub {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+}
+.col-calc {
+  border-top: 5px solid var(--calc);
+}
+.col-calc h3,
+.col-calc .col-sub {
+  color: var(--calc);
+}
+.col-practice {
+  border-top: 5px solid var(--practice);
+}
+.col-practice h3,
+.col-practice .col-sub {
+  color: var(--practice);
+}
+.col-reality {
+  border-top: 5px solid var(--reality);
+}
+.col-reality h3,
+.col-reality .col-sub {
+  color: var(--reality);
+}
+.col-calc-b {
+  border-left: 4px solid var(--calc);
+}
+.col-reality-b {
+  border-left: 4px solid var(--reality);
+}
+.sliders {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  max-width: 520px;
+  margin-bottom: 12px;
+}
+.sliders input[type='range'] {
+  width: 100%;
+  min-height: 32px;
+}
+.sources li {
+  margin-bottom: 6px;
+  overflow-wrap: anywhere;
+}

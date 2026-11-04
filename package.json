@@ -1,6 +1,6 @@
 {
   "name": "odparovac",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "Výpočet a návrh atmosférických odpařovačů kryogenních kapalin (O₂, N₂)",
   "type": "module",
@@ -13,21 +13,26 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run test",
     "gen:tables": "python3 tools/gen_tables.py",
-    "gen:check": "python3 tools/gen_tables.py --check"
+    "gen:check": "python3 tools/gen_tables.py --check",
+    "build:single": "tsc --noEmit && vite build --mode single"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",
     "@types/node": "^22.10.0",
+    "@types/pdfmake": "^0.3.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^5.2.0",
     "jsdom": "^26.1.0",
     "typescript": "~5.9.3",
     "vite": "^7.3.7",
+    "vite-plugin-singlefile": "^2.3.4",
     "vitest": "^3.2.7"
   },
   "dependencies": {
+    "exceljs": "^4.4.0",
+    "pdfmake": "^0.3.13",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   }

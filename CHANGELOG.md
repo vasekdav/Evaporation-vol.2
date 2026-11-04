@@ -2,6 +2,21 @@
 
 Verze se zobrazuje v reportu (fáze 4).
 
+## 0.4.0 – fáze 4: poptávka, export, výuková část
+
+- Generátor poptávky: 11 položek (identifikace, zdroj kapaliny, PS/TS a PED, připojení, tlaková ztráta,
+  garanční podmínky, ochrany, přepínací armatury, zatížení, čistota – kyslíková jen pro O₂, dokumenty),
+  předvyplněno ze vstupů, ke každé položce „proč to výrobce potřebuje“, kontrola shody se vstupy výpočtu
+  a seznam polí k doplnění; úpravy se pamatují.
+- Export: Report PDF (vstupy, výsledky, mezihodnoty, velikost, koncept, kontroly, upozornění, poptávka,
+  verze aplikace, datum), Poptávka PDF, Excel (Info, Vstupy, Výsledky, Kontroly, Koncept, Poptávka; čísla
+  jako čísla). Knihovny se načítají až při exportu.
+- Uložení / načtení případu jako JSON (s validací) a sdílitelný odkaz `?case=…`.
+- Stránky: Postup návrhu v 10 krocích (+ 5b analýza rizik; krok 8 podle látky), Proč ne kW
+  (výpočet × praxe × realita, interaktivní model), Rovnice a předpoklady, Zdroje.
+- Jednosouborový build `npm run build:single` pro otevření ze sdíleného disku (file://).
+- Testy exportu (text PDF ověřen přes pdftotext, Excel načten zpět), poptávky, případu a UI fáze 4.
+
 ## 0.3.0 – fáze 3: velikost, koncept, citlivost
 
 - Posouzení velikosti jako vizuálně odlišená „ideální dolní mez“: T_des, ΔT, LMTD, UA_I/UA_II/UA_potř,

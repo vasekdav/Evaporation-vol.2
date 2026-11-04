@@ -12,3 +12,4 @@ export * from './evaluate';
 export * from './concept';
 export * from './sensitivity';
 export * from './verification';
+export * from './inquiry';

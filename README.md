@@ -17,7 +17,7 @@ Každé číslo je jednoho ze tří druhů a nikdy se nesměšují:
 | 1 | Výpočetní jádro a testy pro O₂ a N₂ | **hotovo** |
 | 2 | UI výpočtu a kontroly | **hotovo** |
 | 3 | Velikost, koncept, citlivost (+ stránka Ověření, editovatelné katalogové základy) | **hotovo** |
-| 4 | Poptávka, export, výuková část | – |
+| 4 | Poptávka, export (PDF, Excel, JSON, odkaz), výuková část, postup návrhu, rovnice, zdroje | **hotovo** |
 | 5 | Argon (případně CO₂) | – |
 
 ## Spuštění
@@ -31,9 +31,13 @@ npm run build       # statický web do dist/ (relativní cesty, bez backendu)
 npm run preview     # náhled buildu
 ```
 
-Složku `dist/` lze nasadit na libovolný statický web nebo intranet. Otevření `index.html`
-přímo ze souboru (`file://`) prohlížeče u ES modulů blokují; jednosouborový build pro sdílený
-disk je v plánu fáze 4.
+Složku `dist/` lze nasadit na libovolný statický web nebo intranet.
+
+Pro sdílený disk nebo tablet bez serveru:
+
+```bash
+npm run build:single   # dist-single/index.html – celá aplikace v jednom souboru (~3,3 MB), funguje přes file://
+```
 
 Regenerace tabulek vlastností (jen při změně mřížky nebo látky):
 
@@ -59,6 +63,13 @@ src/core/
   concept.ts               doporučení konceptu (kap. 6.3), pravidla návrhu (kap. 6.2) – PRAXE
   sensitivity.ts           Q a N_eq vs. T_out a vs. T_okolí, absolutní vlhkost vs. T
   verification.ts          referenční případy kap. 9 pro stránku Ověření i testy, příklad LIN/LOX
+  inquiry.ts               generátor poptávky (předvyplnění, „proč“, kontrola shody se vstupy)
+  restore.ts               bezpečné obnovení vstupů z uložených dat
+src/report/
+  model.ts                 model reportu a poptávky (jediný zdroj pro PDF i Excel)
+  pdf.ts                   PDF (pdfmake, Roboto s českou diakritikou; načítá se až při exportu)
+  xlsx.ts                  Excel (ExcelJS; čísla jako čísla; načítá se až při exportu)
+  caseFile.ts              uložení případu (JSON) a sdílitelný odkaz (?case=…)
   input.ts                 vstupní model (kap. 4) a výchozí hodnoty
   evaluate.ts              orchestrace jednoho případu (čistá funkce)
 src/ui/
@@ -75,6 +86,10 @@ src/ui/
   components/SensitivityPanel.tsx + LineChart.tsx  citlivostní grafy (SVG, hover/klávesnice, tabulka)
   components/BasisEditor.tsx vlastní katalogové základy (kopie / nový / smazat, localStorage)
   components/VerificationPage.tsx stránka Ověření
+  components/ExportBar.tsx   Report PDF, Poptávka PDF, Excel, Uložit / Načíst případ, Kopírovat odkaz
+  pages/InquiryPage.tsx    poptávka pro výrobce
+  pages/LearnPage.tsx      „Proč ne kW“, výpočet × praxe × realita, interaktivní model
+  pages/InfoPages.tsx      postup návrhu v 10 krocích, rovnice a předpoklady, zdroje
 src/data/
   properties/{O2,N2}.json  tabulky vlastností (generované)
   catalog/*.json           katalogové základy a modely (editovatelné)
