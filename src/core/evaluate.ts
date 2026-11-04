@@ -3,6 +3,7 @@
  * Čistá funkce: stejné vstupy dávají stejný výsledek, bez vedlejších efektů.
  */
 import { findBasis, type CatalogBasis } from './catalog';
+import { recommendConcept, type ConceptRecommendation } from './concept';
 import { runChecks, type CheckResult, type OverallStatus, STATUS_TEXT } from './checks';
 import { computeDuty, consumption, reheat, type Consumption, type DutyResult, type ReheatResult } from './duty';
 import type { DesignInput } from './input';
@@ -27,6 +28,8 @@ export interface Evaluation {
   consumptionPerDay: Consumption | null;
   reheat: ReheatOutcome;
   sizing: SizingResult | null;
+  /** Doporučení konceptu (PRAXE); null, pokud jsou vstupy neplatné. */
+  concept: ConceptRecommendation | null;
   /** Neočekávaná chyba dat (nemá nastat, pokud kontroly prošly). */
   error: string | null;
 }
@@ -52,6 +55,7 @@ export function evaluate(input: DesignInput, opts: EvaluateOptions = {}): Evalua
     consumptionPerDay: null,
     reheat: null,
     sizing: null,
+    concept: null,
     error: null,
   };
   if (c.status === 'INVALID' || c.p_bar_a === null || c.T_des_C === null || base.Vn_Nm3_h === null) return base;
@@ -69,6 +73,16 @@ export function evaluate(input: DesignInput, opts: EvaluateOptions = {}): Evalua
     base.reheat = reheatOutcome(props, duty, input.T_actual_out_C);
     const basis = findBasis(input.catalogBasisId, extra)!;
     base.sizing = sizeBranch(props, duty, basis, c.T_des_C, input.k);
+    base.concept = recommendConcept({
+      hoursPerDay: input.hoursPerDay,
+      continuous24_7: input.continuous24_7,
+      frostWeeks: input.frostWeeks,
+      T_des_C: c.T_des_C,
+      T_out_C: input.T_out_C,
+      TSL_C: input.TSL_C,
+      TSL_margin_K: input.TSL_margin_K,
+      availability: input.availability,
+    });
   } catch (e) {
     if (!(e instanceof PropertyRangeError)) throw e;
     base.error = e.message;

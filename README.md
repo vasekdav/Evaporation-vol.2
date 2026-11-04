@@ -16,7 +16,7 @@ Každé číslo je jednoho ze tří druhů a nikdy se nesměšují:
 |---|---|---|
 | 1 | Výpočetní jádro a testy pro O₂ a N₂ | **hotovo** |
 | 2 | UI výpočtu a kontroly | **hotovo** |
-| 3 | Velikost, koncept, citlivost | – |
+| 3 | Velikost, koncept, citlivost (+ stránka Ověření, editovatelné katalogové základy) | **hotovo** |
 | 4 | Poptávka, export, výuková část | – |
 | 5 | Argon (případně CO₂) | – |
 
@@ -56,6 +56,9 @@ src/core/
   psychro.ts               Magnus, absolutní vlhkost, latentní potenciál (vysvětlující model)
   catalog.ts               katalogové základy a modely (ÚDAJ VÝROBCE, ilustrativní)
   checks.ts                kontroly K1–K8, semafor, věta o stavu výsledku
+  concept.ts               doporučení konceptu (kap. 6.3), pravidla návrhu (kap. 6.2) – PRAXE
+  sensitivity.ts           Q a N_eq vs. T_out a vs. T_okolí, absolutní vlhkost vs. T
+  verification.ts          referenční případy kap. 9 pro stránku Ověření i testy, příklad LIN/LOX
   input.ts                 vstupní model (kap. 4) a výchozí hodnoty
   evaluate.ts              orchestrace jednoho případu (čistá funkce)
 src/ui/
@@ -67,6 +70,11 @@ src/ui/
   components/InputPanel.tsx  vstupy kap. 4
   components/results.tsx   stav výsledku, karta výsledku, semafor K1–K8
   components/StepByStep.tsx  postup výpočtu s rovnicemi a mezihodnotami
+  components/SizingPanel.tsx posouzení velikosti – ideální dolní mez, ilustrace z katalogu
+  components/ConceptPanel.tsx doporučení konceptu s odůvodněním, varianty (a)/(b)/(c)
+  components/SensitivityPanel.tsx + LineChart.tsx  citlivostní grafy (SVG, hover/klávesnice, tabulka)
+  components/BasisEditor.tsx vlastní katalogové základy (kopie / nový / smazat, localStorage)
+  components/VerificationPage.tsx stránka Ověření
 src/data/
   properties/{O2,N2}.json  tabulky vlastností (generované)
   catalog/*.json           katalogové základy a modely (editovatelné)
@@ -116,6 +124,8 @@ neextrapoluje: provider vyhodí `PropertyRangeError` a kontroly výsledek zablok
   N_eq o totéž vyšší. Po ověření v katalogu stačí změnit příznak (případně druh tlaku).
 - Psychrometrie 20 °C / 75 %: předepsaný Magnusův vzorec dává **10,93 g/kg** (zadání uvádí 10,95;
   rozdíl je v konstantách vzorce). Rozhodnutí: platí 10,93, implementován je předepsaný vzorec.
+- Poměr LIN/LOX v katalogu Chart: zadání uvádí ≈ 1,085–1,087, z tabulky modelů v kap. 7 vychází
+  1,084–1,091 (SG430HF 1200/1100 = 1,091). Na závěru to nic nemění – fyzika (konstantní U) dává 1,050.
 - Tlaková ztráta 0,5 bar by zvýšila Q o +0,051 % (O₂) / +0,046 % (N₂) – potvrzuje kap. 5.2.
 
 ## Zdroje

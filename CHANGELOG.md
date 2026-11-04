@@ -2,6 +2,24 @@
 
 Verze se zobrazuje v reportu (fáze 4).
 
+## 0.3.0 – fáze 3: velikost, koncept, citlivost
+
+- Posouzení velikosti jako vizuálně odlišená „ideální dolní mez“: T_des, ΔT, LMTD, UA_I/UA_II/UA_potř,
+  katalogové podmínky (ÚDAJ VÝROBCE), UA₁, N_eq, k, tepelná náročnost, nejmenší kapacita větve
+  („dolní hranice pro poptávku – NE doporučený model“), orientační rezerva praxe 1,2–1,5× s podmínkou
+  přiblížení ≈ 10 K, povinná upozornění.
+- Ilustrace modelů z katalogu (jen pod nadpisem „Ilustrace z katalogu – výběr a garance výrobce“),
+  sloupec podle látky (LOX/LIN).
+- Doporučení konceptu (kap. 6.3): jedna větev / přepínané větve / dohřev / nucený tah / vodní lázeň / N+1
+  s rolí (doporučeno / doplněk / zvážit), odůvodněním, výhodami, riziky a co hlídat; varianty (a)/(b)/(c);
+  pravidla návrhu kap. 6.2.
+- Citlivost: Q a N_eq vs. výstupní teplota a vs. teplota okolí (−20 až +20 °C), absolutní vlhkost vs.
+  teplota; SVG grafy s křížovým kurzorem, ovládání klávesnicí a tabulkovým zobrazením.
+- Katalogové základy editovatelné: vlastní kopie vestavěného základu, nový základ, smazání; příznak
+  „tlak ověřen“; ukládání v prohlížeči.
+- Stránka Ověření: 61 referenčních případů kap. 9 s aktuální odchylkou a tolerancí, poučný příklad LIN/LOX.
+- Testy: koncept, citlivost, ověření, UI fáze 3 (celkem 118).
+
 ## 0.2.0 – fáze 2: UI výpočtu a kontroly
 
 - React + TypeScript + Vite, jedna stránka, bez backendu, relativní cesty pro statické nasazení.

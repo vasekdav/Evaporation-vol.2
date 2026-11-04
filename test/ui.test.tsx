@@ -9,6 +9,7 @@ import { defaultInput, evaluate, fmt } from '../src/core';
 import { App } from '../src/ui/App';
 import { formatEditable, parseNumber } from '../src/ui/components/fields';
 import { restoreInput, STORAGE_KEY } from '../src/ui/state';
+import { untaggedNumbers } from './uiHelpers';
 
 beforeEach(() => window.localStorage.clear());
 afterEach(cleanup);
@@ -21,26 +22,6 @@ const input = (label: RegExp): HTMLInputElement => {
   return el as HTMLInputElement;
 };
 const type = (el: HTMLInputElement, value: string) => fireEvent.change(el, { target: { value } });
-
-/**
- * Každý textový uzel s číslicí ve výsledcích musí ležet v <Qty> (číslo + jednotka + původ),
- * ve vzorci, nebo ve vysvětlujícím textu (zprávy kontrol, poznámky).
- */
-function untaggedNumbers(root: HTMLElement): string[] {
-  const bad: string[] = [];
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-    const text = n.textContent ?? '';
-    if (!/\d/.test(text)) continue;
-    const el = n.parentElement!;
-    // nadpisy jsou názvy sekcí (např. „Kontroly K1–K8“), ne hodnoty
-    if (el.closest('[data-formula], [data-narrative], h1, h2, h3')) continue;
-    const q = el.closest('[data-qty]');
-    if (q && q.getAttribute('data-unit') && q.getAttribute('data-source') && q.querySelector('.src')) continue;
-    bad.push(text);
-  }
-  return bad;
-}
 
 describe('výchozí případ', () => {
   it('O₂: Q v UI odpovídá jádru (139,71 kW) a referenci kap. 9', () => {
@@ -153,7 +134,8 @@ describe('interakce', () => {
     const btn = screen.getByRole('button', { name: /Proč na tom záleží: Nastavení TSL/ });
     fireEvent.click(btn);
     expect(btn.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByText(/TSL se nikdy nesnižuje/)).toBeTruthy();
+    const help = document.getElementById(btn.getAttribute('aria-controls')!)!;
+    expect(help.textContent).toContain('TSL se nikdy nesnižuje');
   });
 
   it('všech 8 kontrol je v semaforu', () => {

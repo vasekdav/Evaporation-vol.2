@@ -9,3 +9,6 @@ export * from './catalog';
 export * from './input';
 export * from './checks';
 export * from './evaluate';
+export * from './concept';
+export * from './sensitivity';
+export * from './verification';

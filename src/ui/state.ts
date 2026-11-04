@@ -3,6 +3,7 @@
  * a zápis je ošetřené a aplikace funguje i bez něj.
  */
 import { useEffect, useState } from 'react';
+import type { CatalogBasis } from '../core/catalog';
 import { defaultInput, type DesignInput } from '../core/input';
 import { FLUID_IDS } from '../core/properties/types';
 
@@ -46,4 +47,52 @@ export function useDesignInput(): [DesignInput, (next: DesignInput) => void, () 
     }
   }, [input]);
   return [input, setInput, () => setInput(defaultInput(input.fluid))];
+}
+
+// ------------------------------------------------------------ vlastní katalogové základy
+export const BASES_KEY = 'odparovac.customBases.v1';
+
+const isNumOrNull = (x: unknown) => x === null || (typeof x === 'number' && Number.isFinite(x));
+
+/** Načte vlastní základy; neplatné položky zahodí. */
+export function restoreBases(raw: string | null): CatalogBasis[] {
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw) as unknown;
+    if (!Array.isArray(arr)) return [];
+    return arr.filter(
+      (b): b is CatalogBasis =>
+        !!b &&
+        typeof b === 'object' &&
+        typeof b.id === 'string' &&
+        b.id.startsWith('own-') &&
+        typeof b.name === 'string' &&
+        typeof b.T_amb_C === 'number' &&
+        Number.isFinite(b.T_amb_C) &&
+        isNumOrNull(b.approach_K) &&
+        isNumOrNull(b.RH_pct) &&
+        (b.pressure === null ||
+          (typeof b.pressure === 'object' && ['gauge', 'abs'].includes(b.pressure.kind) && Number.isFinite(b.pressure.value))),
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function useCustomBases(): [CatalogBasis[], (next: CatalogBasis[]) => void] {
+  const [bases, setBases] = useState<CatalogBasis[]>(() => {
+    try {
+      return restoreBases(window.localStorage.getItem(BASES_KEY));
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(BASES_KEY, JSON.stringify(bases));
+    } catch {
+      /* úložiště nedostupné – vlastní základy platí jen do zavření stránky */
+    }
+  }, [bases]);
+  return [bases, setBases];
 }

@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from 'react';
-import { CATALOG_BASES } from '../../core/catalog';
+import type { CatalogBasis } from '../../core/catalog';
 import { fmt } from '../../core/format';
 import { FLUID_POLICY } from '../../core/fluids';
 import { withFluid, type Availability, type DesignInput } from '../../core/input';
@@ -7,6 +7,7 @@ import { getProvider } from '../../core/properties';
 import type { FluidId } from '../../core/properties/types';
 import { FLOW_PER_NM3, type FlowUnit, type PressureKind } from '../../core/units';
 import { FIELD } from '../texts';
+import { BasisEditor } from './BasisEditor';
 import { Field, NumberInput, Segmented } from './fields';
 
 const FLOW_UNITS: readonly { value: FlowUnit; label: string }[] = [
@@ -42,9 +43,11 @@ interface Props {
   input: DesignInput;
   onChange: (next: DesignInput) => void;
   onReset: () => void;
+  customBases: readonly CatalogBasis[];
+  onCustomBasesChange: (bases: CatalogBasis[]) => void;
 }
 
-export function InputPanel({ input, onChange, onReset }: Props) {
+export function InputPanel({ input, onChange, onReset, customBases, onCustomBasesChange }: Props) {
   const set = <K extends keyof DesignInput>(key: K, value: DesignInput[K]) => onChange({ ...input, [key]: value });
   const meta = getProvider(input.fluid).meta;
   const policy = FLUID_POLICY[input.fluid];
@@ -64,7 +67,6 @@ export function InputPanel({ input, onChange, onReset }: Props) {
     margin: useId(),
     hours: useId(),
     tact: useId(),
-    basis: useId(),
     k: useId(),
   };
   const flowUnit = input.flow.unit;
@@ -265,15 +267,13 @@ export function InputPanel({ input, onChange, onReset }: Props) {
       </Group>
 
       <Group title="6 · Katalogový základ (posouzení velikosti)">
-        <Field text={FIELD.basis} htmlFor={ids.basis} hint={`Sloupec katalogu pro ${policy.formula}: ${policy.catalogColumn}`}>
-          <select id={ids.basis} value={input.catalogBasisId} onChange={(e) => set('catalogBasisId', e.target.value)}>
-            {CATALOG_BASES.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <BasisEditor
+          selectedId={input.catalogBasisId}
+          customBases={customBases}
+          onSelect={(id) => set('catalogBasisId', id)}
+          onChangeBases={onCustomBasesChange}
+          hint={`Sloupec katalogu pro ${policy.formula}: ${policy.catalogColumn}`}
+        />
         <Field text={FIELD.k} htmlFor={ids.k}>
           <NumberInput id={ids.k} value={input.k} unit="–" onChange={(v) => set('k', v ?? Number.NaN)} />
         </Field>

@@ -1,6 +1,6 @@
 {
   "name": "odparovac",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Výpočet a návrh atmosférických odpařovačů kryogenních kapalin (O₂, N₂)",
   "type": "module",
