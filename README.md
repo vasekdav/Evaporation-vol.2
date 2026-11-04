@@ -33,6 +33,13 @@ npm run preview     # náhled buildu
 
 Složku `dist/` lze nasadit na libovolný statický web nebo intranet.
 
+### Nasazení na Vercel
+
+Repozitář obsahuje `vercel.json` (Vite, `npm ci`, `npm run build`, výstup `dist/`). Na
+[vercel.com/new](https://vercel.com/new) zvol *Import Git Repository* → `vasekdav/Evaporation-vol.2`
+a potvrď výchozí nastavení. Každý push do produkční větve pak nasadí novou verzi; ostatní větve
+dostanou náhledové URL. Aplikace je čistě statická (bez backendu), stav případu nese odkaz `?case=…`.
+
 Pro sdílený disk nebo tablet bez serveru:
 
 ```bash
