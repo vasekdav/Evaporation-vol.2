@@ -2,6 +2,21 @@
 
 Verze se zobrazuje v reportu (fáze 4).
 
+## 0.2.0 – fáze 2: UI výpočtu a kontroly
+
+- React + TypeScript + Vite, jedna stránka, bez backendu, relativní cesty pro statické nasazení.
+- Vstupy podle kap. 4 ve skupinách (potřeba, proces, klima, bezpečnost, provoz, katalogový základ),
+  každé pole s nápovědou „proč na tom záleží“ (rozbalovací, funguje dotykem).
+- Přepínače přetlak/absolutní a jednotek průtoku (Nm³/h, Sm³/h, scfh) převádějí hodnotu.
+- Desetinná čárka ve vstupech i výstupech; neplatný zápis označí pole a K1.
+- Karta výsledku: Q, zóny I/II, Q pro nasycenou kapalinu, ṁ, absolutní tlak, T_sat, spotřeba za den, dohřev.
+- Semafor K1–K8 s vysvětlením a odkazem na normu; stav výsledku jednou větou.
+- Postup výpočtu krok za krokem s rovnicemi, dosazením a mezihodnotami.
+- Štítek původu u každého čísla (VÝPOČET / PRAXE / ÚDAJ VÝROBCE / VSTUP) a legenda.
+- Rozvržení pro notebook i tablet; na úzké obrazovce přilepený souhrn výsledku.
+- Poslední vstupy v localStorage (jen pro pohodlí, s ošetřením chyb).
+- UI testy (jsdom); CI navíc ověřuje build.
+
 ## 0.1.0 – fáze 1: výpočetní jádro
 
 - Generátor tabulek z CoolProp 7.2.0 pro O₂ a N₂, včetně validačních bodů.

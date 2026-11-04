@@ -3,7 +3,10 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022", "DOM"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
@@ -13,7 +16,15 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": [
+      "node",
+      "vite/client"
+    ],
+    "jsx": "react-jsx"
   },
-  "include": ["src", "test", "vitest.config.ts"]
+  "include": [
+    "src",
+    "test",
+    "vite.config.ts"
+  ]
 }

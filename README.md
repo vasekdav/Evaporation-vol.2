@@ -15,7 +15,7 @@ Každé číslo je jednoho ze tří druhů a nikdy se nesměšují:
 | Fáze | Obsah | Stav |
 |---|---|---|
 | 1 | Výpočetní jádro a testy pro O₂ a N₂ | **hotovo** |
-| 2 | UI výpočtu a kontroly | – |
+| 2 | UI výpočtu a kontroly | **hotovo** |
 | 3 | Velikost, koncept, citlivost | – |
 | 4 | Poptávka, export, výuková část | – |
 | 5 | Argon (případně CO₂) | – |
@@ -24,9 +24,16 @@ Každé číslo je jednoho ze tří druhů a nikdy se nesměšují:
 
 ```bash
 npm install
-npm test            # referenční případy kap. 9 + přesnost tabulek proti CoolProp
+npm run dev         # vývojový server, http://localhost:5173
+npm test            # referenční případy kap. 9, přesnost tabulek, UI testy
 npm run typecheck
+npm run build       # statický web do dist/ (relativní cesty, bez backendu)
+npm run preview     # náhled buildu
 ```
+
+Složku `dist/` lze nasadit na libovolný statický web nebo intranet. Otevření `index.html`
+přímo ze souboru (`file://`) prohlížeče u ES modulů blokují; jednosouborový build pro sdílený
+disk je v plánu fáze 4.
 
 Regenerace tabulek vlastností (jen při změně mřížky nebo látky):
 
@@ -51,6 +58,15 @@ src/core/
   checks.ts                kontroly K1–K8, semafor, věta o stavu výsledku
   input.ts                 vstupní model (kap. 4) a výchozí hodnoty
   evaluate.ts              orchestrace jednoho případu (čistá funkce)
+src/ui/
+  App.tsx                  rozvržení: vstupy vlevo (na úzké obrazovce nahoře + přilepený souhrn)
+  texts.ts                 texty CZ, nápovědy „proč na tom záleží“ (připraveno pro CZ/EN)
+  state.ts                 stav vstupů, localStorage jen pro pohodlí (ošetřené chyby)
+  components/Qty.tsx       jediný způsob zobrazení čísla: hodnota + jednotka + štítek původu
+  components/fields.tsx    pole s CZ desetinnou čárkou, přepínače, rozbalovací nápověda
+  components/InputPanel.tsx  vstupy kap. 4
+  components/results.tsx   stav výsledku, karta výsledku, semafor K1–K8
+  components/StepByStep.tsx  postup výpočtu s rovnicemi a mezihodnotami
 src/data/
   properties/{O2,N2}.json  tabulky vlastností (generované)
   catalog/*.json           katalogové základy a modely (editovatelné)
@@ -58,7 +74,15 @@ test/
   reference.test.ts        akceptační případy kap. 9 (hodnoty přepsané ze zadání)
   accuracy.test.ts         3000 náhodných bodů / látku proti přímému CoolProp
   core.test.ts             jednotkové testy větví logiky
+  ui.test.tsx              UI: čísla shodná s jádrem, změna látky, kontroly, „žádné číslo bez jednotky a původu“
 ```
+
+### Původ čísel v UI
+
+Každé číslo ve výsledcích se zobrazuje komponentou `Qty` se štítkem původu:
+**VÝP** VÝPOČET (fyzika) · **PRX** PRAXE · **VÝR** ÚDAJ VÝROBCE · **VST** VSTUP (zadáno uživatelem,
+např. v dosazení do rovnic). Test `ui.test.tsx` prochází všechny textové uzly výsledků a selže,
+pokud najde číslo mimo `Qty`, vzorec nebo vysvětlující text (zprávy kontrol, poznámky).
 
 Výpočetní jádro je čisté TypeScript bez závislosti na UI. Mimo rozsah dat se nikdy
 neextrapoluje: provider vyhodí `PropertyRangeError` a kontroly výsledek zablokují s důvodem.

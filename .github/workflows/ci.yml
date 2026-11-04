@@ -6,7 +6,7 @@ on:
 
 jobs:
   core:
-    name: Jádro – typy a testy (kap. 9)
+    name: Typy, testy (kap. 9 + UI) a build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,6 +17,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - run: npm run build
 
   tables:
     name: Tabulky odpovídají CoolProp 7.2.0
