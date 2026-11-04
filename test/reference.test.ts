@@ -16,6 +16,7 @@ import {
   type DutyInput,
   type FluidId,
 } from '../src/core';
+import arRef from '../src/data/reference/Ar.json';
 import { expectAbs, expectRel, TOL } from './helpers';
 
 const P6 = 6.01325;
@@ -204,6 +205,71 @@ describe('Výchozí vstupy end-to-end', () => {
     const e = evaluate(defaultInput('N2'));
     expectRel(e.duty!.Q_kW, 129.337);
     if (e.sizing?.ok) expectRel(e.sizing.N_eq_Nm3_h, 755.6, TOL.REL);
+    else throw new Error('sizing');
+  });
+});
+
+// ---------------------------------------------------------------- 9.x Ar (fáze 5)
+// Zadání: „Pro Ar si referenční případy vygeneruj z CoolProp stejnou sadou případů jako v 9.1 a 9.2.“
+// Reference src/data/reference/Ar.json počítá tools/gen_tables.py PŘÍMO ze stavové rovnice
+// (Tegeler et al. 1999 v CoolProp 7.2.0), nezávisle na tabulkách, ze kterých počítá aplikace.
+
+describe('Argon (Ar) – reference vygenerované z CoolProp', () => {
+  const props = getProvider('Ar');
+  const Tin = arRef.T_in_default_C;
+
+  it('reference z CoolProp 7.2.0, výchozí kapalina −186 °C', () => {
+    expect(arRef.coolprop_version).toBe('7.2.0');
+    expect(Tin).toBe(-186);
+    expect(props.meta.eos).toBe('Tegeler et al. (1999)');
+  });
+
+  it('vlastnosti', () => {
+    const r = arRef.props;
+    expectAbs(props.meta.rho_n_kg_Nm3, r.rho_n, 5e-7);
+    expectAbs(props.sat(1.01325).T_sat_C, r.nbp, TOL.T_K);
+    expectRel(props.sat(1.01325).r_kJ_kg, r.r_atm);
+    const s = props.sat(P6);
+    expectAbs(s.T_sat_C, r.Tsat, TOL.T_K);
+    expectAbs(s.r_kJ_kg, r.r, TOL.H_KJ_KG);
+    expectAbs(s.h_l_kJ_kg, r.hl, TOL.H_KJ_KG);
+    expectAbs(s.h_v_kJ_kg, r.hv, TOL.H_KJ_KG);
+    expectAbs(props.gasH(P6, -30), r.hgas, TOL.H_KJ_KG);
+    expectAbs(props.liquid(P6, Tin).h_kJ_kg, r.hliq, TOL.H_KJ_KG);
+  });
+
+  it.each(arRef.cases)('Q: $name', (c) => {
+    const d = duty('Ar', c);
+    expectRel(d.Q_kW, c.Q);
+    if ('QI' in c && c.QI !== undefined) expectRel(d.Q_I_kW, c.QI);
+    if ('QII' in c && c.QII !== undefined) expectRel(d.Q_II_kW, c.QII);
+  });
+
+  it('velikost: UA₁ a N_eq (Chart SuperGap EU, k = 1)', () => {
+    const ua1 = catalogUA1(props, chart);
+    expect(ua1.ok).toBe(true);
+    if (ua1.ok) expectAbs(ua1.UA1_W_K_per_Nm3h, arRef.ua1_chart, 5e-4);
+    for (const n of arRef.neq) expectRel(neq('Ar', n.Ta, n.Tout, Tin), n.N, TOL.REL);
+  });
+
+  it('dohřev (6,01325 bar a)', () => {
+    const m = duty('Ar', { p: P6, Tout: -30, Tin }).m_kg_s;
+    for (const r of arRef.reheat) expectRel(reheat(props, m, P6, -40, r.to)!.Q_kW, r.Q);
+  });
+
+  it('kontroly: 41 bar a → K2 CHYBA; kapalina −195 °C → K5 CHYBA (pod trojným bodem); 40 bar a OK', () => {
+    const k = (e: ReturnType<typeof evaluate>, id: string) => e.checks.find((c) => c.id === id)!;
+    expect(k(evaluate({ ...defaultInput('Ar'), pressure: { value: 41, kind: 'abs' } }), 'K2').level).toBe('CHYBA');
+    const e5 = evaluate({ ...defaultInput('Ar'), liquid: { kind: 'subcooled', T_C: -195 } });
+    expect(k(e5, 'K5').level).toBe('CHYBA');
+    expect(k(e5, 'K5').message).toContain('pod trojným bodem');
+    expect(evaluate({ ...defaultInput('Ar'), pressure: { value: 40, kind: 'abs' } }).duty).not.toBeNull();
+  });
+
+  it('výchozí vstupy end-to-end: Ar 1000 Nm³/h, 5 barg, −186 °C → −30 °C', () => {
+    const e = evaluate(defaultInput('Ar'));
+    expectRel(e.duty!.Q_kW, arRef.cases[0]!.Q);
+    if (e.sizing?.ok) expectRel(e.sizing.N_eq_Nm3_h, arRef.neq[0]!.N, TOL.REL);
     else throw new Error('sizing');
   });
 });

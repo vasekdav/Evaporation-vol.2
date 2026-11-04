@@ -6,9 +6,9 @@
  * Všechny entalpie v kJ/kg, tlaky v bar a, teploty v °C, hustoty v kg/m³.
  */
 
-export type FluidId = 'O2' | 'N2';
+export type FluidId = 'O2' | 'N2' | 'Ar';
 
-export const FLUID_IDS: readonly FluidId[] = ['O2', 'N2'];
+export const FLUID_IDS: readonly FluidId[] = ['O2', 'N2', 'Ar'];
 
 export interface FluidMeta {
   fluid: FluidId;

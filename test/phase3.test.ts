@@ -134,7 +134,7 @@ describe('ověření (stránka Ověření)', () => {
     const rows = runVerification();
     expect(rows.length).toBeGreaterThan(50);
     expect(rows.filter((r) => !r.pass).map((r) => `${r.fluid} ${r.name}`)).toEqual([]);
-    expect(new Set(rows.map((r) => r.fluid))).toEqual(new Set(['O2', 'N2', 'společné']));
+    expect(new Set(rows.map((r) => r.fluid))).toEqual(new Set(['O2', 'N2', 'Ar', 'společné']));
   });
   it('LIN/LOX: fyzika 1,050, katalog Chart 1,084–1,091 (zadání uvádí ≈ 1,085–1,087)', () => {
     const l = linLoxLesson()!;

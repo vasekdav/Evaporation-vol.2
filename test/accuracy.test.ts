@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import O2 from './fixtures/coolprop-validation-O2.json';
 import N2 from './fixtures/coolprop-validation-N2.json';
+import Ar from './fixtures/coolprop-validation-Ar.json';
 import { computeDuty } from '../src/core/duty';
 import { getProvider, type FluidId } from '../src/core/properties';
 
@@ -22,12 +23,13 @@ interface Case {
 const SETS: Record<FluidId, { Vn_Nm3_h: number; cases: Case[] }> = {
   O2: O2 as never,
   N2: N2 as never,
+  Ar: Ar as never,
 };
 
 const TOL_Q_REL = 1e-3;
 const TOL_T_K = 0.05;
 
-describe.each(['O2', 'N2'] as FluidId[])('přesnost tabulek %s vs. CoolProp', (fluid) => {
+describe.each(['O2', 'N2', 'Ar'] as FluidId[])('přesnost tabulek %s vs. CoolProp', (fluid) => {
   const set = SETS[fluid];
   const props = getProvider(fluid);
 

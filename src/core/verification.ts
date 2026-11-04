@@ -3,13 +3,14 @@
  * V̇n = 1000 Nm³/h) a jejich vyhodnocení proti aktuálnímu jádru. Hodnoty jsou přepsané
  * ze zadání. Používá stránka Ověření i testy.
  */
+import arRef from '../data/reference/Ar.json';
 import { CATALOG_MODEL_SETS, findBasis } from './catalog';
 import { evaluate } from './evaluate';
 import { computeDuty, reheat } from './duty';
 import { FLUID_POLICY } from './fluids';
 import { defaultInput, type DesignInput } from './input';
 import { getProvider } from './properties';
-import type { FluidId } from './properties/types';
+import { FLUID_IDS, type FluidId } from './properties/types';
 import { absoluteHumidity_g_kg } from './psychro';
 import { catalogUA1, sizeBranch } from './sizing';
 
@@ -91,14 +92,17 @@ const Q_CASES: Record<FluidId, QCase[]> = {
     { name: '30 bar a, nasycená', p: 30, Tout: -30, Tin: null, Q: 84.914, QI: 22.668, QII: 62.245 },
     { name: '30 bar a, −196 °C', p: 30, Tout: -30, Tin: -196, Q: 125.952 },
   ],
+  // Ar: zadání předepisuje referenci vygenerovat z CoolProp stejnou sadou případů (tools/gen_tables.py)
+  Ar: arRef.cases.map((c) => ({ ...c, QI: c.QI ?? undefined, QII: c.QII ?? undefined })),
 };
 
 const PROPS_REF = {
   O2: { rho_n: 1.429033, nbp: -182.962, r_atm: 213.06, Tsat: -161.661, r: 187.53, hl: 37.448, hv: 224.978, hgas: 352.16, hliq: 0.202 },
   N2: { rho_n: 1.250386, nbp: -195.795, r_atm: 199.18, Tsat: -176.74, r: 168.609, hl: 40.603, hv: 209.212, hgas: 372.308, hliq: -0.068 },
-} as const;
+  Ar: arRef.props,
+} as const satisfies Record<FluidId, Record<string, number>>;
 
-const UA1_REF: Record<FluidId, number> = { O2: 1.5229, N2: 1.4503 };
+const UA1_REF: Record<FluidId, number> = { O2: 1.5229, N2: 1.4503, Ar: arRef.ua1_chart };
 
 const NEQ_REF: Record<FluidId, { Ta: number; Tout: number; N: number }[]> = {
   O2: [
@@ -112,6 +116,7 @@ const NEQ_REF: Record<FluidId, { Ta: number; Tout: number; N: number }[]> = {
     { Ta: -15, Tout: -25, N: 1049.5 },
     { Ta: -15, Tout: -20, N: 1232.3 },
   ],
+  Ar: arRef.neq,
 };
 
 const REHEAT_REF: Record<FluidId, { to: number; Q: number }[]> = {
@@ -123,6 +128,7 @@ const REHEAT_REF: Record<FluidId, { to: number; Q: number }[]> = {
     { to: -30, Q: 3.669 },
     { to: -20, Q: 7.332 },
   ],
+  Ar: arRef.reheat,
 };
 
 function fluidRows(f: FluidId): VerificationRow[] {
@@ -188,7 +194,7 @@ function level(e: ReturnType<typeof evaluate>, id: string) {
 }
 
 export function runVerification(): VerificationRow[] {
-  const rows: VerificationRow[] = [...fluidRows('O2'), ...fluidRows('N2')];
+  const rows: VerificationRow[] = FLUID_IDS.flatMap(fluidRows);
   rows.push(
     num('Psychrometrie', 'společné', '20 °C / 75 % RH', 'g/kg', 10.93, absoluteHumidity_g_kg(20, 75), { kind: 'abs', value: 0.005 }),
     num('Psychrometrie', 'společné', '−15 °C / 85 % RH (nad ledem)', 'g/kg', 0.86, absoluteHumidity_g_kg(-15, 85), { kind: 'abs', value: 0.005 }),
@@ -198,12 +204,20 @@ export function runVerification(): VerificationRow[] {
       const k = level(e, 'K2');
       return { pass: k.level === 'CHYBA' && k.message.includes('nad kritickým tlakem dusíku') && k.message.includes('mimo rozsah'), actual: `K2 ${k.level}` };
     }),
+    checkRow('Ar při 41 bar a', 'Ar', { ...defaultInput('Ar'), pressure: { value: 41, kind: 'abs' } }, 'K2 CHYBA (mimo rozsah 1–40 bar a)', (e) => {
+      const k = level(e, 'K2');
+      return { pass: k.level === 'CHYBA' && e.duty === null, actual: `K2 ${k.level}` };
+    }),
+    checkRow('Ar s kapalinou −195 °C', 'Ar', { ...defaultInput('Ar'), liquid: { kind: 'subcooled', T_C: -195 } }, 'K5 CHYBA (pod trojným bodem −189,34 °C)', (e) => {
+      const k = level(e, 'K5');
+      return { pass: k.level === 'CHYBA' && k.message.includes('pod trojným bodem'), actual: `K5 ${k.level}` };
+    }),
     checkRow('N₂ s kapalinou −215 °C', 'N2', { ...defaultInput('N2'), liquid: { kind: 'subcooled', T_C: -215 } }, 'K5 CHYBA (pod trojným bodem)', (e) => {
       const k = level(e, 'K5');
       return { pass: k.level === 'CHYBA' && k.message.includes('pod trojným bodem'), actual: `K5 ${k.level}` };
     }),
   );
-  for (const f of ['O2', 'N2'] as FluidId[]) {
+  for (const f of FLUID_IDS) {
     rows.push(
       checkRow('T_out −25 °C a TSL −25 °C', f, { ...defaultInput(f), T_out_C: -25, TSL_C: -25 }, 'K8 CHYBA, „Výkon platný, ale NÁVRH NEVYHOVUJE“', (e) => {
         const k = level(e, 'K8');

@@ -2,6 +2,15 @@
 
 Verze se zobrazuje v reportu (fáze 4).
 
+## 0.5.0 – fáze 5: argon
+
+- Argon (Tegeler et al. 1999): tabulky z CoolProp 7.2.0, rozsah 1–40 bar a, kapalina od −189 °C, výchozí −186 °C,
+  sloupec katalogu LAR; přesnost proti CoolProp ve 3000 bodech (výkon ≤ 0,033 %).
+- Referenční případy Ar vygenerované přímo z CoolProp stejnou sadou jako kap. 9.1/9.2 (vlastnosti, 11 případů Q,
+  UA₁, N_eq, dohřev, kontroly K2/K5) – v testech i na stránce Ověření (celkem 98 řádků).
+- Poptávka a postup návrhu pro Ar (skupina PED 2, riziko udušení, argon těžší než vzduch).
+- Bez sloupce LAR v katalogu se modely neukazují a nic se nepřepočítává z LOX/LIN.
+
 ## 0.4.0 – fáze 4: poptávka, export, výuková část
 
 - Generátor poptávky: 11 položek (identifikace, zdroj kapaliny, PS/TS a PED, připojení, tlaková ztráta,

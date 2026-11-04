@@ -2,6 +2,7 @@ import { useId, useMemo, useState } from 'react';
 import type { CatalogBasis } from '../../core/catalog';
 import type { Evaluation } from '../../core/evaluate';
 import { computeDuty } from '../../core/duty';
+import { FLUID_POLICY } from '../../core/fluids';
 import { fmt } from '../../core/format';
 import { getProvider } from '../../core/properties';
 import { absoluteHumidity_g_kg, LATENT_KJ_PER_G } from '../../core/psychro';
@@ -82,7 +83,7 @@ export function LearnPage({ ev, basis }: { ev: Evaluation; basis: CatalogBasis |
       <section className="card" aria-labelledby="learn-model">
         <h2 id="learn-model">Interaktivní model</h2>
         <p className="note">
-          Stejný případ jako na stránce Výpočet ({ev.input.fluid === 'O2' ? 'O₂' : 'N₂'}, stejný průtok, tlak a kapalina). Posuň teplotu
+          Stejný případ jako na stránce Výpočet ({FLUID_POLICY[ev.input.fluid].formula}, stejný průtok, tlak a kapalina). Posuň teplotu
           vzduchu a výstupní teplotu a sleduj, co se mění.
         </p>
         {!d || !basis ? (

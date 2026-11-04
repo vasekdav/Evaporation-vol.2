@@ -5,7 +5,7 @@
  */
 import type { FluidId } from './properties/types';
 
-export type CatalogColumn = 'LOX' | 'LIN';
+export type CatalogColumn = 'LOX' | 'LIN' | 'LAR';
 
 export interface FluidPolicy {
   id: FluidId;
@@ -38,5 +38,15 @@ export const FLUID_POLICY: Readonly<Record<FluidId, FluidPolicy>> = {
     T_in_default_C: -196,
     catalogColumn: 'LIN',
     liquidLabel: 'LIN',
+  },
+  // Fáze 5. Rozsah 1–40 bar a (kritický tlak 48,63 bar), dolní mez kapaliny −189 °C (trojný bod −189,34 °C).
+  Ar: {
+    id: 'Ar',
+    name_cs: 'argon',
+    name_en: 'argon',
+    formula: 'Ar',
+    T_in_default_C: -186,
+    catalogColumn: 'LAR',
+    liquidLabel: 'LAR',
   },
 };

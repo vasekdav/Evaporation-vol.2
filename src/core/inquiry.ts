@@ -111,7 +111,7 @@ export function buildInquiry(ev: Evaluation, basis?: CatalogBasis): InquiryItem[
         field(
           'ped.group',
           'Skupina tekutiny dle PED 2014/68/EU',
-          isO2 ? 'skupina 1 (kyslík – oxidující plyn)' : 'skupina 2 (dusík)',
+          isO2 ? 'skupina 1 (kyslík – oxidující plyn)' : `skupina 2 (${pol.name_cs})`,
           'PRAXE',
           true,
         ),

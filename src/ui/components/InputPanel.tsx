@@ -102,6 +102,7 @@ export function InputPanel({ input, onChange, onReset, customBases, onCustomBase
             options={[
               { value: 'O2', label: 'O₂ kyslík' },
               { value: 'N2', label: 'N₂ dusík' },
+              { value: 'Ar', label: 'Ar argon' },
             ]}
             onChange={(f) => onChange(withFluid(input, f))}
           />

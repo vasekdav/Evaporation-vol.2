@@ -1,6 +1,6 @@
 # Odpařovač – výpočet a návrh atmosférických odpařovačů kryogenních kapalin
 
-Inženýrský nástroj pro O₂ a N₂ (fáze 1), později Ar. Přesně počítá tepelnou potřebu
+Inženýrský nástroj pro O₂, N₂ a Ar. Přesně počítá tepelnou potřebu
 z referenčních stavových rovnic, odhaduje **ideální dolní mez** velikosti vůči
 katalogovému základu výrobce a kontroluje bezpečnost (křehký lom, TSL podle AIGA 027).
 
@@ -18,7 +18,7 @@ Každé číslo je jednoho ze tří druhů a nikdy se nesměšují:
 | 2 | UI výpočtu a kontroly | **hotovo** |
 | 3 | Velikost, koncept, citlivost (+ stránka Ověření, editovatelné katalogové základy) | **hotovo** |
 | 4 | Poptávka, export (PDF, Excel, JSON, odkaz), výuková část, postup návrhu, rovnice, zdroje | **hotovo** |
-| 5 | Argon (případně CO₂) | – |
+| 5 | Argon (CO₂ – viz níže) | **Ar hotovo** |
 
 ## Spuštění
 
@@ -112,7 +112,7 @@ neextrapoluje: provider vyhodí `PropertyRangeError` a kontroly výsledek zablok
 
 ## Vlastnosti látek
 
-- Stavové rovnice: O₂ Schmidt & Wagner (1985), N₂ Span et al. (2000), přes CoolProp 7.2.0.
+- Stavové rovnice: O₂ Schmidt & Wagner (1985), N₂ Span et al. (2000), Ar Tegeler et al. (1999), přes CoolProp 7.2.0.
 - Referenční stav entalpie: nasycená kapalina při 1,01325 bar má h = 0.
 - Tabulky:
   - **nasycení podle tlaku** – základ 0,5 bar do 20 bar a a 1 bar nad 20 bar a, zhuštěno
@@ -127,8 +127,20 @@ neextrapoluje: provider vyhodí `PropertyRangeError` a kontroly výsledek zablok
   |---|---|---|---|---|---|
   | O₂ | 0,007 % | 0,021 % | 0,010 % | 0,008 K | 0,008 % |
   | N₂ | 0,006 % | 0,019 % | 0,010 % | 0,007 K | 0,012 % |
+  | Ar | 0,008 % | 0,033 % | 0,015 % | 0,008 K | 0,015 % |
 
   Požadavek: ≤ 0,1 % výkonu, ±0,05 K.
+
+## Argon (fáze 5)
+
+- Rozsah tlaku **1–40 bar a** (kritický tlak 48,63 bar; odstup obdobný jako u O₂), dolní mez tabulky kapaliny
+  **−189 °C** (trojný bod −189,34 °C), výchozí podchlazená kapalina **−186 °C** (NBP −185,85 °C), sloupec katalogu **LAR**.
+  Zadání tyto hodnoty pro Ar neuvádí – jsou zvolené analogicky k O₂ a N₂.
+- Referenční případy (`src/data/reference/Ar.json`) generuje `tools/gen_tables.py` **přímo ze stavové rovnice**
+  (nezávisle na tabulkách) stejnou sadou případů jako kap. 9.1 a 9.2; jsou v testech i na stránce Ověření.
+- Ukázková tabulka Chart SuperGap EU nemá sloupec LAR. Aplikace pro Ar modely neukazuje a kapacitu
+  z LOX/LIN nepřepočítává; LAR lze doplnit do `src/data/catalog/models.json`.
+- Jádro (výkon, velikost, kontroly, koncept) se pro Ar neměnilo – přibyla jen data, texty a testy.
 
 ## Poznámky k zadání zjištěné při ověřování
 

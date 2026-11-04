@@ -34,6 +34,8 @@ export interface CatalogModel {
   model: string;
   LOX: number;
   LIN: number;
+  /** Kapacita pro argon – v ukázkové tabulce zatím není; nikdy se nepřepočítává z LOX/LIN. */
+  LAR?: number;
   area_m2: number;
   height_m: number;
 }
@@ -69,7 +71,13 @@ export function modelsAtOrAbove(
   column: CatalogColumn,
   minCapacity_Nm3_h: number,
 ): ModelAbove[] {
-  return set.models
-    .filter((m) => m[column] >= minCapacity_Nm3_h)
-    .map((m) => ({ model: m.model, capacity_Nm3_h: m[column], column }));
+  return set.models.flatMap((m) => {
+    const cap = m[column];
+    return cap !== undefined && cap >= minCapacity_Nm3_h ? [{ model: m.model, capacity_Nm3_h: cap, column }] : [];
+  });
+}
+
+/** Má sada modelů katalogový sloupec pro danou látku? (LAR v ukázkové tabulce Chart chybí.) */
+export function hasColumn(set: CatalogModelSet, column: CatalogColumn): boolean {
+  return set.models.some((m) => m[column] !== undefined);
 }

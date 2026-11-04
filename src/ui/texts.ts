@@ -13,8 +13,9 @@ export const FIELD = {
   fluid: {
     label: 'Látka',
     help:
-      'Látka určuje stavovou rovnici, výchozí teplotu kapaliny, rozsah tlaku a sloupec katalogu (LOX / LIN). ' +
-      'Dusík je omezen na 32 bar a: nad kritickým tlakem 33,96 bar kapalina nevře a model dvou zón neplatí.',
+      'Látka určuje stavovou rovnici, výchozí teplotu kapaliny, rozsah tlaku a sloupec katalogu (LOX / LIN / LAR). ' +
+      'Dusík je omezen na 32 bar a: nad kritickým tlakem 33,96 bar kapalina nevře a model dvou zón neplatí. ' +
+      'Kyslík a argon: 1–40 bar a.',
   },
   flow: {
     label: 'Špičkový návrhový průtok (peak flow)',

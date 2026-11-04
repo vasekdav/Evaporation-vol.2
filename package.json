@@ -1,8 +1,8 @@
 {
   "name": "odparovac",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
-  "description": "Výpočet a návrh atmosférických odpařovačů kryogenních kapalin (O₂, N₂)",
+  "description": "Výpočet a návrh atmosférických odpařovačů kryogenních kapalin (O₂, N₂, Ar)",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -20,9 +20,14 @@ export function guideSteps(fluid: FluidId): GuideStep[] {
           'Kyslíková čistota: čištění a materiály pro kyslíkovou službu (EIGA Doc 33 / EN 12300), žádné mazivo a nečistoty, certifikát čištění.',
           'Okolí bez hořlavin a mastnoty; obohacení atmosféry kyslíkem při úniku zvyšuje hořlavost oděvů a materiálů.',
         ]
-      : [
-          'Riziko udušení při úniku dusíku v uzavřeném prostoru: umístění venku nebo dobře větraný prostor, detekce O₂ podle místa instalace.',
-        ];
+      : fluid === 'N2'
+        ? [
+            'Riziko udušení při úniku dusíku v uzavřeném prostoru: umístění venku nebo dobře větraný prostor, detekce O₂ podle místa instalace.',
+          ]
+        : [
+            'Riziko udušení při úniku argonu v uzavřeném prostoru: umístění venku nebo dobře větraný prostor, detekce O₂ podle místa instalace.',
+            'Argon je těžší než vzduch – hromadí se v jámách, kanálech, šachtách a sklepech; detekci O₂ umísti nízko.',
+          ];
   return [
     {
       n: '1',

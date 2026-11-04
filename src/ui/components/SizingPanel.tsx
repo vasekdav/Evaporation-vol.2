@@ -1,4 +1,4 @@
-import { CATALOG_MODEL_SETS, ILLUSTRATION_TITLE, modelsAtOrAbove, type CatalogBasis } from '../../core/catalog';
+import { CATALOG_MODEL_SETS, hasColumn, ILLUSTRATION_TITLE, modelsAtOrAbove, type CatalogBasis } from '../../core/catalog';
 import { PRACTICE_APPROACH_K, PRACTICE_RESERVE_RANGE } from '../../core/concept';
 import type { Evaluation } from '../../core/evaluate';
 import { fmt } from '../../core/format';
@@ -153,6 +153,19 @@ function ModelIllustration({
     );
   }
   const col = FLUID_POLICY[fluid].catalogColumn;
+  if (!hasColumn(set, col)) {
+    return (
+      <div className="illustration">
+        <h3>
+          {ILLUSTRATION_TITLE} <SourceTag src="VYROBCE" />
+        </h3>
+        <p className="note" data-narrative="" data-testid="no-column">
+          Ukázková tabulka modelů {basis.name} v aplikaci nemá sloupec {col}. Kapacity LOX ani LIN se na {col} nepřepočítávají –
+          vyžádej si od výrobce katalogovou kapacitu pro {FLUID_POLICY[fluid].name_cs}, případně ji doplň do dat výrobce.
+        </p>
+      </div>
+    );
+  }
   const models = modelsAtOrAbove(set, col, minCapacity);
   const byName = new Map(set.models.map((m) => [m.model, m]));
   return (

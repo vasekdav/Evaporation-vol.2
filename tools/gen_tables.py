@@ -99,6 +99,25 @@ FLUIDS = {
             frange(0.0, 1.0, 0.1), frange(1.0, 4.0, 0.25), frange(4.0, 32.0, 1.0)
         ),
     },
+    # Fáze 5: argon. Kritický bod 48,63 bar / −122,46 °C; rozsah 1–40 bar a (odstup jako u O₂).
+    "Ar": {
+        "coolprop": "Argon",
+        "name_cs": "argon",
+        "p_min_bar_a": 1.0,
+        "p_max_bar_a": 40.0,
+        "T_liq_min_C": -189.0,  # trojný bod −189,34 °C
+        "p_grid": lambda: merge_grid(
+            frange(1.0, 20.0, 0.5),
+            frange(20.0, 40.0, 1.0),
+            frange(1.0, 3.0, 0.1),
+            frange(3.0, 8.0, 0.25),
+        ),
+        "liq_T_grid": lambda Tmax: merge_grid(
+            frange(-189.0, math.ceil(Tmax), 1.0),
+            frange(math.ceil(Tmax) - 10.0, math.ceil(Tmax), 0.25),
+        ),
+        "liq_dp_grid": lambda: merge_grid(frange(0.0, 40.0, 1.0)),
+    },
 }
 
 GAS_T_GRID_C = frange(-60.0, 40.0, 5.0)
@@ -272,6 +291,92 @@ def build_validation(key: str, n: int = 3000, seed: int = 20261104) -> dict:
     }
 
 
+# --------------------------------------------------------------------------- referenční případy
+# Pro Ar zadání předepisuje vygenerovat referenční případy z CoolProp stejnou sadou jako
+# kap. 9.1 a 9.2. Počítá se PŘÍMO ze stavové rovnice (nezávisle na tabulkách).
+REFERENCE_FLUIDS = {"Ar": {"T_in": -186.0}}
+CHART_BASIS = {"T_amb_C": 20.0, "p_bar_a": 15.0 + 1.01325, "approach_K": 10.0}
+
+
+def _duty(f: Fluid, Vn: float, p: float, Tout: float, Tin):
+    rho_n = PropsSI("D", "P", P_ATM_PA, "T", T_NORMAL_K, f.cp)
+    m = Vn * rho_n / 3600.0
+    pa = p * 1e5
+    hl, hv = f.sat_p(pa, 0, "H"), f.sat_p(pa, 1, "H")
+    hin = hl if Tin is None else f.liquid_h(pa, Tin + K0)
+    hout = f.h(pa, Tout + K0)
+    Ts = PropsSI("T", "P", pa, "Q", 0, f.cp) - K0
+    return m, m * (hout - hin), m * (hv - hin), m * (hout - hv), Ts
+
+
+def _ua(f: Fluid, Vn, p, Tair, Tout, Tin) -> float:
+    _, _, QI, QII, Ts = _duty(f, Vn, p, Tout, Tin)
+    dI, dO = Tair - Ts, Tair - Tout
+    lmtd = (dI - dO) / math.log(dI / dO)
+    return QI * 1e3 / dI + QII * 1e3 / lmtd  # W/K
+
+
+def build_reference(key: str) -> dict:
+    f = Fluid(key)
+    cp = f.cp
+    Tin = REFERENCE_FLUIDS[key]["T_in"]
+    P6 = 6.01325
+    pa6 = P6 * 1e5
+    Ts40 = PropsSI("T", "P", 40e5, "Q", 0, cp) - K0
+    Tin40 = math.floor((Ts40 - 0.3) * 10) / 10  # těsně pod nasycením, jako −124,8 °C u O₂
+    props = {
+        "rho_n": PropsSI("D", "P", P_ATM_PA, "T", T_NORMAL_K, cp),
+        "nbp": PropsSI("T", "P", P_ATM_PA, "Q", 0, cp) - K0,
+        "r_atm": f.sat_p(P_ATM_PA, 1, "H") - f.sat_p(P_ATM_PA, 0, "H"),
+        "Tsat": PropsSI("T", "P", pa6, "Q", 0, cp) - K0,
+        "r": f.sat_p(pa6, 1, "H") - f.sat_p(pa6, 0, "H"),
+        "hl": f.sat_p(pa6, 0, "H"),
+        "hv": f.sat_p(pa6, 1, "H"),
+        "hgas": f.h(pa6, -30 + K0),
+        "hliq": f.liquid_h(pa6, Tin + K0),
+    }
+    cases_def = [
+        ("Výchozí", P6, -30.0, Tin, True),
+        ("Nasycená", P6, -30.0, None, True),
+        ("T_out −25", P6, -25.0, Tin, False),
+        ("T_out −20", P6, -20.0, Tin, False),
+        ("5 bar a, nasycená", 5.0, -30.0, None, False),
+        ("15 barg, T_out −20", 16.01325, -20.0, Tin, False),
+        ("30 bar a, nasycená", 30.0, -30.0, None, True),
+        ("30 bar a, " + f"{Tin:.0f} °C".replace("-", "−"), 30.0, -30.0, Tin, False),
+        ("40 bar a, " + f"{Tin40:.1f} °C".replace("-", "−").replace(".", ","), 40.0, -30.0, Tin40, False),
+        ("40 bar a, " + f"{Tin:.0f} °C".replace("-", "−"), 40.0, -30.0, Tin, False),
+        ("Mimo mřížku 20,5 bar a / −57,5 °C / −150,5 °C", 20.5, -57.5, -150.5, False),
+    ]
+    cases = []
+    for name, p, Tout, Ti, zones in cases_def:
+        _, Q, QI, QII, _ = _duty(f, 1000.0, p, Tout, Ti)
+        c = {"name": name, "p": p, "Tout": Tout, "Tin": Ti, "Q": round(Q, 3)}
+        if zones:
+            c["QI"], c["QII"] = round(QI, 3), round(QII, 3)
+        cases.append(c)
+    b = CHART_BASIS
+    ua1 = _ua(f, 1.0, b["p_bar_a"], b["T_amb_C"], b["T_amb_C"] - b["approach_K"], None)
+    neq = [
+        {"Ta": Ta, "Tout": To, "N": round(_ua(f, 1000.0, P6, Ta, To, Tin) / ua1, 1)}
+        for Ta, To in ((0.0, -30.0), (-15.0, -30.0), (-15.0, -25.0), (-15.0, -20.0))
+    ]
+    m = _duty(f, 1000.0, P6, -30.0, Tin)[0]
+    reheat = [{"to": to, "Q": round(m * (f.h(pa6, to + K0) - f.h(pa6, -40 + K0)), 3)} for to in (-30.0, -20.0)]
+    r3 = lambda x: round(x, 3)
+    return {
+        "fluid": key,
+        "coolprop_version": COOLPROP_VERSION,
+        "note": "Vygenerováno přímo z CoolProp (ne z tabulek); h = 0 pro nasycenou kapalinu při 1,01325 bar; V̇n = 1000 Nm³/h.",
+        "T_in_default_C": Tin,
+        "props": {k: (round(v, 6) if k == "rho_n" else r3(v)) for k, v in props.items()},
+        "cases": cases,
+        "ua1_chart": round(ua1, 4),
+        "neq": neq,
+        "reheat": reheat,
+    }
+
+
 def dump(obj: dict) -> str:
     return json.dumps(obj, ensure_ascii=False, separators=(",", ":")) + "\n"
 
@@ -311,6 +416,11 @@ def main() -> None:
             OUT_DATA / f"{key}.json": dump(build_tables(key)),
             OUT_FIX / f"coolprop-validation-{key}.json": dump(build_validation(key)),
         }
+        if key in REFERENCE_FLUIDS:
+            (ROOT / "src" / "data" / "reference").mkdir(parents=True, exist_ok=True)
+            outputs[ROOT / "src" / "data" / "reference" / f"{key}.json"] = json.dumps(
+                build_reference(key), ensure_ascii=False, indent=1
+            ) + "\n"
         for path, text in outputs.items():
             if check:
                 diff = (

@@ -97,12 +97,13 @@ const EQUATIONS: readonly { title: string; eq: string[]; notes: string[] }[] = [
   },
   {
     title: 'Vlastnosti látek',
-    eq: ['Stavové rovnice: O₂ Schmidt & Wagner (1985), N₂ Span et al. (2000) – přes CoolProp 7.2.0'],
+    eq: ['Stavové rovnice: O₂ Schmidt & Wagner (1985), N₂ Span et al. (2000), Ar Tegeler et al. (1999) – přes CoolProp 7.2.0'],
     notes: [
       'Tabulky generované z CoolProp při buildu: nasycení podle tlaku, plyn h(p, T) −60 až +40 °C, kapalina h_l(T, Δp) s Δp = p − p_sat(T); lineární / bilineární interpolace.',
       'Doložená přesnost proti přímému CoolProp (3000 bodů na látku): výkon ≤ 0,1 % (skutečně ~0,02 %), T_sat ≤ 0,05 K.',
       'Mimo rozsah dat se nikdy neextrapoluje – výpočet se zablokuje s důvodem.',
-      'Rozsah tlaku: O₂ 1–40 bar a, N₂ 1–32 bar a (kritický tlak N₂ 33,96 bar – nadkritický režim je samostatná úloha).',
+      'Rozsah tlaku: O₂ 1–40 bar a, N₂ 1–32 bar a (kritický tlak N₂ 33,96 bar – nadkritický režim je samostatná úloha), Ar 1–40 bar a (kritický tlak 48,63 bar).',
+      'Dolní mez tabulky kapaliny těsně nad trojným bodem: O₂ −218 °C, N₂ −209 °C, Ar −189 °C.',
     ],
   },
 ];
@@ -141,6 +142,9 @@ const SOURCES: readonly { text: string; url?: string }[] = [
   },
   {
     text: 'R. Span, E. W. Lemmon, R. T. Jacobsen, W. Wagner, A. Yokozeki: A Reference Equation of State for the Thermodynamic Properties of Nitrogen… J. Phys. Chem. Ref. Data 29 (2000) 1361–1433.',
+  },
+  {
+    text: 'Ch. Tegeler, R. Span, W. Wagner: A New Equation of State for Argon Covering the Fluid Region for Temperatures From the Melting Line to 700 K at Pressures up to 1000 MPa. J. Phys. Chem. Ref. Data 28 (1999) 779–850.',
   },
   { text: 'CoolProp', url: 'https://github.com/CoolProp/CoolProp' },
   {
