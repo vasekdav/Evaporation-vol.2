@@ -85,10 +85,13 @@ neextrapoluje: provider vyhodí `PropertyRangeError` a kontroly výsledek zablok
 
 ## Poznámky k zadání zjištěné při ověřování
 
-- Katalogový tlak Chart SuperGap EU „15 bar“ je **přetlak** (16,01325 bar a). Jen s ním vychází
-  UA₁ = 1,5229 (O₂) a 1,4503 (N₂) W/K na Nm³/h. Katalogové základy proto ukládají druh tlaku.
-- Psychrometrie 20 °C / 75 %: předepsaný Magnusův vzorec dává 10,93 g/kg, zadání uvádí 10,95 g/kg
-  (rozdíl 0,2 % v konstantách vzorce). Implementován je předepsaný vzorec.
+- Katalogový tlak Chart SuperGap EU „15 bar“ je **předpokládán jako přetlak** (16,01325 bar a),
+  protože jen s ním vychází UA₁ = 1,5229 (O₂) a 1,4503 (N₂) W/K na Nm³/h ze zadání. V katalogu
+  zatím **neověřeno** (`pressureVerified: false` v `src/data/catalog/bases.json`); aplikace to
+  vypisuje u posouzení velikosti. Při 15 bar a by UA₁ bylo nižší o 0,10 % (O₂) / 0,16 % (N₂),
+  N_eq o totéž vyšší. Po ověření v katalogu stačí změnit příznak (případně druh tlaku).
+- Psychrometrie 20 °C / 75 %: předepsaný Magnusův vzorec dává **10,93 g/kg** (zadání uvádí 10,95;
+  rozdíl je v konstantách vzorce). Rozhodnutí: platí 10,93, implementován je předepsaný vzorec.
 - Tlaková ztráta 0,5 bar by zvýšila Q o +0,051 % (O₂) / +0,046 % (N₂) – potvrzuje kap. 5.2.
 
 ## Zdroje

@@ -128,6 +128,21 @@ describe('velikost', () => {
     const ratios = CATALOG_MODEL_SETS[0]!.models.map((m) => m.LIN / m.LOX);
     for (const r of ratios) expect(r).toBeGreaterThan(1.08);
   });
+  it('neověřený katalogový tlak Chart (15 barg): upozornění u velikosti; vliv 15 bar a vs. barg ≤ 0,2 %', () => {
+    const e = evaluate(defaultInput('O2'));
+    if (!e.sizing?.ok) throw new Error('sizing');
+    expect(e.sizing.warnings.join(' ')).toContain('není ověřen');
+    const chart = findBasis('chart-supergap-eu')!;
+    const asAbs: CatalogBasis = { ...chart, pressure: { value: 15, kind: 'abs' } };
+    for (const f of ['O2', 'N2'] as const) {
+      const g = catalogUA1(getProvider(f), chart);
+      const a = catalogUA1(getProvider(f), asAbs);
+      if (!g.ok || !a.ok) throw new Error('UA1');
+      const rel = 1 - a.UA1_W_K_per_Nm3h / g.UA1_W_K_per_Nm3h;
+      expect(rel).toBeGreaterThan(0);
+      expect(rel).toBeLessThan(0.002);
+    }
+  });
   it('neúplný katalogový základ (Tekoma bez tlaku a přiblížení) → UA₁ nelze, nevymýšlí se', () => {
     const r = catalogUA1(getProvider('O2'), findBasis('tekoma-cryonorm')!);
     expect(r.ok).toBe(false);
@@ -176,12 +191,10 @@ describe('psychrometrie (vysvětlující model, kap. 5.5)', () => {
   it('−15 °C / 85 % nad ledem: 0,86 g/kg', () => {
     expectAbs(absoluteHumidity_g_kg(-15, 85), 0.86, 0.005);
   });
-  it('20 °C / 75 %: předepsaný Magnus dává 10,93 g/kg (zadání uvádí 10,95)', () => {
-    // Přesně podle vzorce z kap. 5.5 vychází 10,928 g/kg. Referenci 10,95 by dal
-    // e_s(20 °C) ≈ 23,37 hPa místo 23,33 hPa z Magnusu – rozdíl 0,2 % je v konstantách,
-    // ne v implementaci. Ponecháno k potvrzení uživatelem.
-    expectAbs(absoluteHumidity_g_kg(20, 75), 10.928, 0.001);
-    expectAbs(absoluteHumidity_g_kg(20, 75), 10.95, 0.03);
+  it('20 °C / 75 %: 10,93 g/kg (předepsaný Magnus, kap. 5.5)', () => {
+    // Zadání uvádí 10,95 g/kg; přesně podle předepsaného vzorce vychází 10,928 g/kg
+    // (rozdíl je v konstantách Magnusova vzorce). Rozhodnutí uživatele: platí 10,93.
+    expectAbs(absoluteHumidity_g_kg(20, 75), 10.93, 0.005);
   });
   it('Magnus: voda nad 0 °C, led pod 0 °C', () => {
     expectAbs(saturationPressure_hPa(0), 6.112, 1e-12);

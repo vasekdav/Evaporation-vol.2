@@ -129,6 +129,14 @@ export function sizeBranch(
   const ua1 = catalogUA1(props, basis);
   if (!ua1.ok) return { ok: false, reason: ua1.reason };
   const N_eq = ua.UA_W_K / ua1.UA1_W_K_per_Nm3h;
+  const warnings =
+    basis.pressureVerified === false && basis.pressure !== null
+      ? [
+          ...SIZING_WARNINGS,
+          `Katalogový tlak základu „${basis.name}“ (${fmt(basis.pressure.value, 2)} ${basis.pressure.kind === 'gauge' ? 'barg' : 'bar a'}) ` +
+            'není ověřen v podkladu výrobce. Na N_eq má vliv jen řádově 0,1 %, přesto ho ověř v katalogu.',
+        ]
+      : SIZING_WARNINGS;
   return {
     ok: true,
     ua,
@@ -138,6 +146,6 @@ export function sizeBranch(
     k,
     thermalDemand: (N_eq * k) / duty.Vn_Nm3_h,
     minBranchCapacity_Nm3_h: Math.max(duty.Vn_Nm3_h, N_eq * k),
-    warnings: SIZING_WARNINGS,
+    warnings,
   };
 }

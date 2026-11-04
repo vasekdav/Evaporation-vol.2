@@ -15,6 +15,11 @@ export interface CatalogBasis {
   RH_pct: number | null;
   /** Katalogový tlak; přetlak je vztažen k 1,01325 bar. null = neuveden. */
   pressure: PressureValue | null;
+  /**
+   * Zda je druh a hodnota katalogového tlaku ověřené v podkladu výrobce.
+   * false = předpoklad (zobrazí se upozornění u posouzení velikosti); null = tlak neuveden.
+   */
+  pressureVerified: boolean | null;
   /** Přiblížení výstupní teploty k okolí [K]; null = neuvedeno. */
   approach_K: number | null;
   runtime_h: number | null;
