@@ -109,6 +109,8 @@ export interface ConceptInput {
   TSL_C: number | null;
   TSL_margin_K: number;
   availability: Availability;
+  /** Očekávaná výstupní teplota bez dohřevu; null = dohřev se neuvažuje. */
+  T_actual_out_C?: number | null;
 }
 
 export interface ConceptItem {
@@ -170,7 +172,15 @@ export function recommendConcept(c: ConceptInput): ConceptRecommendation {
       );
       if (c.frostWeeks !== null && c.frostWeeks > 0)
         add('SWITCHED', 'zvážit', `Mrazové období ${c.frostWeeks} týdnů: námraza se kumuluje; přepínané větve odtávají střídavě.`);
+      else if (c.frostWeeks === null)
+        add('SWITCHED', 'zvážit', 'Délka mrazového období není zadaná – při delším mrazu se námraza kumuluje; zvaž přepínané větve.');
     }
+  }
+  if (longRun && frost) {
+    const why =
+      'Provoz bez odstávek v mrazu: odstavená větev pod 0 °C prakticky neodtává, takže přepínání kapacitu neobnoví.';
+    add('ATM_HEATER', 'zvážit', `${why} Dohřev nebo třetí větev; rozhodne přepočet výrobce na mrazové období.`);
+    add('FORCED_DRAFT', 'zvážit', `${why} Nucený tah zlepší přestup tepla.`);
   }
   if (frost && c.frostWeeks === null)
     notes.push('Délka mrazového období není zadaná – doplň ji; rozhoduje o jedné vs. přepínaných větvích a patří do poptávky.');
@@ -188,6 +198,14 @@ export function recommendConcept(c: ConceptInput): ConceptRecommendation {
     add('FORCED_DRAFT', 'zvážit', `${why} Nucený tah zvýší přestup tepla.`);
     add('WATER_BATH', 'zvážit', `${why} Vodní lázeň nezávisí na teplotě vzduchu.`);
   }
+
+  // 2b) Plánovaný dohřev (očekávaná T_out bez dohřevu nižší než návrhová)
+  if (c.T_actual_out_C !== undefined && c.T_actual_out_C !== null && c.T_actual_out_C < c.T_out_C)
+    add(
+      'ATM_HEATER',
+      'doplněk',
+      `Očekávaná výstupní teplota bez dohřevu ${fmt1(c.T_actual_out_C)} °C je pod návrhovou ${fmt1(c.T_out_C)} °C – dohřev je součástí konceptu.`,
+    );
 
   // 3) Dostupnost
   if (c.availability === 'N+1') add('N_PLUS_1', 'doplněk', 'Požadovaná dostupnost N+1: záložní větev plné kapacity.');

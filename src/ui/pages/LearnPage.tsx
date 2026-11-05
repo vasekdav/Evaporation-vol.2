@@ -75,6 +75,7 @@ export function LearnPage({ ev, basis }: { ev: Evaluation; basis: CatalogBasis |
           <ul>
             <li>Námraza pokryje celou plochu a zhorší přestup tepla – nejhorší je konec provozního cyklu.</li>
             <li>V mrazu chybí latentní teplo vlhkosti, které vzduch v létě odevzdá vymrzáním.</li>
+            <li>Nejrychleji odpařovač zarůstá ledem kolem 0 až −5 °C při vysoké vlhkosti a v mlze (zkušenost z praxe).</li>
             <li>Studený vzduch se drží u jednotky a u budov. Kolik to dělá, ví jen výrobce z měření – aplikace si koeficient nevymýšlí.</li>
           </ul>
         </section>

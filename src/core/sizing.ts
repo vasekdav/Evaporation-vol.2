@@ -20,8 +20,11 @@ import { toAbsBar, P_ATM_STD_BAR } from './units';
 export const SIZING_WARNINGS: readonly string[] = [
   'Model předpokládá stejné U jako při katalogových podmínkách. V mrazu to neplatí: námraza pokryje celou plochu, ' +
     'chybí latentní teplo vlhkosti (při 20 °C a 75 % RH je ve vzduchu ~11 g vody/kg, při −15 °C ~1 g/kg) ' +
-    'a studený vzduch se drží u jednotky. Výsledek je proto OPTIMISTICKÝ.',
-  'LMTD s konstantním c_p nadhodnocuje UA_II zhruba o 1,5 %, což je na bezpečné straně.',
+    'a studený vzduch se drží u jednotky. Tyto vlivy převládají (studený suchý vzduch má jen o málo lepší přirozenou ' +
+    'konvekci), výsledek je proto OPTIMISTICKÝ.',
+  'LMTD s konstantním c_p nadhodnocuje UA_II v potřebě i v katalogovém UA₁; v poměru N_eq se chyba jen částečně ruší. ' +
+    'Pod ~14 bar a vychází N_eq o 1,5–4,5 % NÍŽ (optimisticky), při 30–40 bar a o 6–14 % výš (nezávislá kontrola integrací přes h(T)).',
+  'UA₁ předpokládá nasycenou kapalinu při katalogovém tlaku (konzervativní volba – kapalina na bodu varu by dala UA₁ o ~10 % vyšší).',
 ];
 
 export type UAResult =
@@ -148,4 +151,52 @@ export function sizeBranch(
     minBranchCapacity_Nm3_h: Math.max(duty.Vn_Nm3_h, N_eq * k),
     warnings,
   };
+}
+
+/**
+ * Kontrola stávajícího odpařovače (scénář S3): katalogová kapacita jedné provozní větve
+ * proti návrhovému průtoku a ideální dolní mezi. Kladný výsledek NIKDY neznamená „vyhoví“ –
+ * jen že model konstantního U nevylučuje vyhovění; rozhoduje přepočet výrobce.
+ */
+export type ExistingVerdict = 'BELOW_FLOW' | 'BELOW_IDEAL' | 'ABOVE_IDEAL_BELOW_PRACTICE' | 'ABOVE_PRACTICE';
+
+export interface ExistingAssessment {
+  capacity_Nm3_h: number;
+  verdict: ExistingVerdict;
+  /** kapacita / nejmenší kapacita větve − 1 */
+  reserveOverMin: number;
+  /** kapacita / průtok */
+  ratioToFlow: number;
+  text: string;
+}
+
+export function assessExisting(
+  capacity_Nm3_h: number,
+  sizing: Extract<SizingResult, { ok: true }>,
+  Vn_Nm3_h: number,
+  practiceLow = 1.2,
+): ExistingAssessment {
+  const ratioToFlow = capacity_Nm3_h / Vn_Nm3_h;
+  const reserveOverMin = capacity_Nm3_h / sizing.minBranchCapacity_Nm3_h - 1;
+  const base = { capacity_Nm3_h, ratioToFlow, reserveOverMin };
+  if (capacity_Nm3_h < Vn_Nm3_h)
+    return {
+      ...base,
+      verdict: 'BELOW_FLOW',
+      text: `NEVYHOVÍ: katalogová kapacita ${fmt(capacity_Nm3_h, 0)} Nm³/h je pod návrhovým průtokem ${fmt(Vn_Nm3_h, 0)} Nm³/h.`,
+    };
+  if (capacity_Nm3_h < sizing.N_eq_Nm3_h * sizing.k)
+    return {
+      ...base,
+      verdict: 'BELOW_IDEAL',
+      text:
+        `NEVYHOVÍ ani v ideálním modelu: kapacita ${fmt(capacity_Nm3_h, 0)} Nm³/h je pod ideální dolní mezí ` +
+        `N_eq·k = ${fmt(sizing.N_eq_Nm3_h * sizing.k, 0)} Nm³/h při ${fmt(sizing.ua.T_des_C, 1)} °C.`,
+    };
+  const common =
+    `Kapacita ${fmt(capacity_Nm3_h, 0)} Nm³/h je ${fmt(reserveOverMin * 100, 0)} % nad nejmenší kapacitou větve ` +
+    `(${fmt(ratioToFlow, 2)}× průtoku). To NEZNAMENÁ, že vyhoví – ideální dolní mez je optimistická; potvrdí přepočet výrobce.`;
+  return ratioToFlow < practiceLow
+    ? { ...base, verdict: 'ABOVE_IDEAL_BELOW_PRACTICE', text: `${common} Pod orientační rezervou praxe ${fmt(practiceLow, 1)}× průtoku.` }
+    : { ...base, verdict: 'ABOVE_PRACTICE', text: common };
 }

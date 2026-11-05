@@ -144,7 +144,7 @@ export function SensitivityPanel({ ev, basis }: { ev: Evaluation; basis: Catalog
             { name: `RH ${fmt(RH, 0)} %`, slot: 1, points: data.hum.map((p) => ({ x: p.T_C, y: p.x_RH_g_kg })) },
             { name: 'nasycení 100 %', slot: 2, points: data.hum.map((p) => ({ x: p.T_C, y: p.x_sat_g_kg })) },
           ]}
-          note="Magnusův vzorec, pod 0 °C nad ledem. Neslouží k dimenzování."
+          note="Magnusův vzorec, pod 0 °C nad ledem (RH vztažená k ledu; meteorologická RH se udává vůči vodě – vyšlo by asi o 15 % víc vody). Neslouží k dimenzování."
         />
       </div>
       <p className="note">

@@ -115,13 +115,24 @@ export function computeDuty(props: PropertyProvider, inp: DutyInput): DutyResult
 export interface Consumption {
   hours: number;
   mass_kg: number;
+  /** objem při stavu kapaliny na vstupu (p, T_in) – zadání 5.3 */
   volume_m3: number;
+  /** objem jako kapalina na normálním bodu varu (1,01325 bar) – obvyklé „m³ LIN/LOX“ */
+  volume_nbp_m3: number | null;
 }
 
-/** Spotřeba kapaliny za dobu provozu: m = ṁ·t, V = m/ρ_in. */
-export function consumption(duty: DutyResult, hours: number): Consumption {
+/**
+ * Spotřeba kapaliny za dobu provozu: m = ṁ·t, V = m/ρ_in. U nasycené kapaliny při vysokém
+ * tlaku je ρ_in výrazně nižší než v zásobníku, proto se uvádí i objem při normálním bodu varu.
+ */
+export function consumption(duty: DutyResult, hours: number, rho_nbp_kg_m3: number | null = null): Consumption {
   const mass_kg = duty.m_kg_h * hours;
-  return { hours, mass_kg, volume_m3: mass_kg / duty.rho_in_kg_m3 };
+  return {
+    hours,
+    mass_kg,
+    volume_m3: mass_kg / duty.rho_in_kg_m3,
+    volume_nbp_m3: rho_nbp_kg_m3 ? mass_kg / rho_nbp_kg_m3 : null,
+  };
 }
 
 export interface ReheatResult {

@@ -3,6 +3,9 @@ import { PRACTICE_APPROACH_K, PRACTICE_RESERVE_RANGE } from '../../core/concept'
 import type { Evaluation } from '../../core/evaluate';
 import { fmt } from '../../core/format';
 import { FLUID_POLICY } from '../../core/fluids';
+import { useId, useState } from 'react';
+import { assessExisting, type SizingResult } from '../../core/sizing';
+import { NumberInput } from './fields';
 import { Qty, SourceTag } from './Qty';
 
 function Row({ label, children, emphasis }: { label: string; children: React.ReactNode; emphasis?: boolean }) {
@@ -22,6 +25,8 @@ export function SizingPanel({ ev, basis }: { ev: Evaluation; basis: CatalogBasis
   const d = ev.duty;
   if (!s || !d) return null;
   const policy = FLUID_POLICY[ev.input.fluid];
+  const set = basis?.modelsId ? CATALOG_MODEL_SETS.find((m) => m.id === basis.modelsId) : undefined;
+  const noColumn = !set || !hasColumn(set, policy.catalogColumn);
   return (
     <section className="card sizing" aria-labelledby="size-h">
       <div className="band" data-narrative="">
@@ -81,6 +86,15 @@ export function SizingPanel({ ev, basis }: { ev: Evaluation; basis: CatalogBasis
                       <Qty v={basis.approach_K} unit="K" src="VYROBCE" d={0} />
                     </Row>
                   ) : null}
+                  <Row label="Doba provozu (katalog)">
+                    {basis.runtime_h !== null ? (
+                      <Qty v={basis.runtime_h} unit="h" src="VYROBCE" d={0} />
+                    ) : (
+                      <span className="muted" data-narrative="">
+                        neuvedeno – vyžádej od výrobce
+                      </span>
+                    )}
+                  </Row>
                 </>
               ) : null}
               <Row label="Katalogový případ: nasycená kapalina, T_out,kat">
@@ -94,14 +108,29 @@ export function SizingPanel({ ev, basis }: { ev: Evaluation; basis: CatalogBasis
           <div className="kv-grid result-rows">
             <Row label="Ideální ekvivalent N_eq = UA_potř / UA₁" emphasis>
               <span data-testid="Neq">
-                <Qty v={s.N_eq_Nm3_h} unit={`Nm³/h (${policy.catalogColumn}, katalogový základ)`} src="VYPOCET" d={1} />
+                <Qty
+                  v={s.N_eq_Nm3_h}
+                  unit={noColumn ? 'Nm³/h – fyzikální ekvivalent' : `Nm³/h (${policy.catalogColumn}, katalogový základ)`}
+                  src="VYPOCET"
+                  d={1}
+                />
               </span>
+              {noColumn ? (
+                <span className="muted" data-narrative="">
+                  Katalog v aplikaci nemá sloupec {policy.catalogColumn} – jde jen o fyzikální ekvivalent vůči UA₁ této látky.
+                </span>
+              ) : null}
             </Row>
-            <Row label="Koeficient námrazy / rezervy k">
-              <Qty v={s.k} unit="–" src="VSTUP" d={2} />
+            <Row label="Koeficient námrazy / rezervy k (násobí N_eq)">
+              <Qty v={s.k} unit="×" src="VSTUP" d={2} />
             </Row>
             <Row label="Tepelná náročnost N_eq·k / V̇n">
-              <Qty v={s.thermalDemand} unit="–" src="VYPOCET" d={3} />
+              <Qty v={s.thermalDemand} unit="× průtoku" src="VYPOCET" d={3} />
+              {s.thermalDemand < 1 ? (
+                <span className="muted" data-narrative="">
+                  Méně než 1 jen díky velkému přiblížení v ideálním modelu – v praxi to neznamená menší odpařovač než katalogový průtok.
+                </span>
+              ) : null}
             </Row>
             <Row label="Nejmenší jmenovitá kapacita větve = MAX(V̇n; N_eq·k)" emphasis>
               <span data-testid="minCap">
@@ -116,6 +145,11 @@ export function SizingPanel({ ev, basis }: { ev: Evaluation; basis: CatalogBasis
                 <Qty v={d.Vn_Nm3_h * PRACTICE_RESERVE_RANGE[0]} unit="Nm³/h" src="PRAXE" d={0} /> až{' '}
                 <Qty v={d.Vn_Nm3_h * PRACTICE_RESERVE_RANGE[1]} unit="Nm³/h" src="PRAXE" d={0} />
               </span>
+              {s.minBranchCapacity_Nm3_h < d.Vn_Nm3_h * PRACTICE_RESERVE_RANGE[0] ? (
+                <span className="below-practice" data-narrative="" data-testid="below-practice">
+                  Nejmenší kapacita větve je pod orientační rezervou praxe – k násobí N_eq, ne průtok.
+                </span>
+              ) : null}
               <span className="muted" data-narrative="">
                 Jen při přiblížení ≈ {PRACTICE_APPROACH_K} K; tvé přiblížení je {fmt(s.ua.dT_out_K, 1)} K.
                 {s.ua.dT_out_K < PRACTICE_APPROACH_K ? ' Při menším přiblížení bývá potřeba výrazně víc.' : ''} Odhad praxe, ne norma –
@@ -128,7 +162,13 @@ export function SizingPanel({ ev, basis }: { ev: Evaluation; basis: CatalogBasis
               <li key={w}>{w}</li>
             ))}
           </ul>
-          <ModelIllustration basis={basis} minCapacity={s.minBranchCapacity_Nm3_h} fluid={ev.input.fluid} />
+          <ModelIllustration
+            basis={basis}
+            minCapacity={s.minBranchCapacity_Nm3_h}
+            practiceCapacity={d.Vn_Nm3_h * PRACTICE_RESERVE_RANGE[0]}
+            fluid={ev.input.fluid}
+          />
+          <ExistingCheck ev={ev} sizing={s} basis={basis} />
         </>
       )}
     </section>
@@ -138,10 +178,12 @@ export function SizingPanel({ ev, basis }: { ev: Evaluation; basis: CatalogBasis
 function ModelIllustration({
   basis,
   minCapacity,
+  practiceCapacity,
   fluid,
 }: {
   basis: CatalogBasis | undefined;
   minCapacity: number;
+  practiceCapacity: number;
   fluid: Evaluation['input']['fluid'];
 }) {
   const set = basis?.modelsId ? CATALOG_MODEL_SETS.find((m) => m.id === basis.modelsId) : undefined;
@@ -189,13 +231,14 @@ function ModelIllustration({
                 <th scope="col">Kapacita {col}</th>
                 <th scope="col">Plocha</th>
                 <th scope="col">Výška</th>
+                <th scope="col">Pásmo praxe</th>
               </tr>
             </thead>
             <tbody>
               {models.map((m) => {
                 const full = byName.get(m.model)!;
                 return (
-                  <tr key={m.model}>
+                  <tr key={m.model} className={m.capacity_Nm3_h < practiceCapacity ? 'below' : ''}>
                     <td data-narrative="">{m.model}</td>
                     <td>
                       <Qty v={m.capacity_Nm3_h} unit="Nm³/h" src="VYROBCE" d={0} />
@@ -206,6 +249,7 @@ function ModelIllustration({
                     <td>
                       <Qty v={full.height_m} unit="m" src="VYROBCE" d={2} />
                     </td>
+                    <td data-narrative="">{m.capacity_Nm3_h < practiceCapacity ? 'pod 1,2× průtoku' : '≥ 1,2× průtoku'}</td>
                   </tr>
                 );
               })}
@@ -215,6 +259,72 @@ function ModelIllustration({
       )}
       <p className="note" data-narrative="">
         Výrobci mají různé katalogové základy. Modely různých výrobců nesrovnávej podle katalogových Nm³/h bez přepočtu.
+      </p>
+    </div>
+  );
+}
+
+/** Kontrola stávajícího odpařovače (scénář S3). */
+function ExistingCheck({
+  ev,
+  sizing,
+  basis,
+}: {
+  ev: Evaluation;
+  sizing: Extract<SizingResult, { ok: true }>;
+  basis: CatalogBasis | undefined;
+}) {
+  const idSel = useId();
+  const idCap = useId();
+  const col = FLUID_POLICY[ev.input.fluid].catalogColumn;
+  const set = basis?.modelsId ? CATALOG_MODEL_SETS.find((m) => m.id === basis.modelsId) : undefined;
+  const models = set ? set.models.filter((m) => m[col] !== undefined) : [];
+  const [model, setModel] = useState('');
+  const [own, setOwn] = useState<number | null>(null);
+  const chosen = models.find((m) => m.model === model);
+  const capacity = chosen ? chosen[col]! : own;
+  const a = capacity !== null && Number.isFinite(capacity) && capacity > 0 ? assessExisting(capacity, sizing, ev.duty!.Vn_Nm3_h) : null;
+  const tslReserve = ev.input.TSL_C !== null ? ev.input.T_out_C - ev.input.TSL_C : null;
+  return (
+    <div className="existing" data-testid="existing">
+      <h3>Kontrola stávajícího odpařovače (S3)</h3>
+      <div className="row">
+        {models.length ? (
+          <label className="inline-field" htmlFor={idSel}>
+            Model z katalogu
+            <select id={idSel} value={model} onChange={(e) => setModel(e.target.value)} data-narrative="">
+              <option value="">– vlastní kapacita –</option>
+              {models.map((m) => (
+                <option key={m.model} value={m.model}>
+                  {m.model}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {!chosen ? (
+          <label className="inline-field" htmlFor={idCap}>
+            Katalogová kapacita jedné provozní větve
+            <NumberInput id={idCap} value={own} optional unit="Nm³/h" onChange={setOwn} />
+          </label>
+        ) : null}
+      </div>
+      {a ? (
+        <p className={`existing-verdict v-${a.verdict}`} data-narrative="" data-testid="existing-verdict">
+          {a.text}
+        </p>
+      ) : (
+        <p className="note" data-narrative="">
+          Vyber model nebo zadej katalogovou kapacitu jedné provozní větve (údaj výrobce za katalogových podmínek).
+        </p>
+      )}
+      <p className="note">
+        <span data-narrative="">Rezerva výstupní teploty nad TSL: </span>
+        {tslReserve !== null ? (
+          <Qty v={tslReserve} unit="K" src="VYPOCET" d={1} />
+        ) : (
+          <span data-narrative="">TSL nezadáno</span>
+        )}
       </p>
     </div>
   );

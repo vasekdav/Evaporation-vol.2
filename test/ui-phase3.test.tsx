@@ -30,7 +30,7 @@ describe('posouzení velikosti v UI', () => {
     expect(minCap()).toBe(fmt(1000, 0));
     expect(screen.getByText(/dolní hranice pro poptávku – NE doporučený model/)).toBeTruthy();
     expect(screen.getByText(/IDEÁLNÍ DOLNÍ MEZ/)).toBeTruthy();
-    expect(within(results()).getByText(/Výsledek je proto OPTIMISTICKÝ/)).toBeTruthy();
+    expect(within(results()).getByText(/výsledek je proto OPTIMISTICKÝ/)).toBeTruthy();
   });
   it('O₂ −15 °C / −20 °C: N_eq 1 247,8; s k = 1,3 nejmenší kapacita = N_eq·k', () => {
     render(<App />);
@@ -46,12 +46,13 @@ describe('posouzení velikosti v UI', () => {
     render(<App />);
     expect(screen.getByText('Ilustrace z katalogu – výběr a garance výrobce')).toBeTruthy();
     expect(screen.getByText(/Kapacita LOX/)).toBeTruthy();
-    expect(within(results()).getAllByText('SG430HF')[0]).toBeTruthy();
-    expect(within(results()).queryByText('SG360HF')).toBeNull();
+    const ill = () => results().querySelector('.illustration') as HTMLElement;
+    expect(within(ill()).getAllByText('SG430HF')[0]).toBeTruthy();
+    expect(within(ill()).queryByText('SG360HF')).toBeNull();
     fireEvent.click(screen.getByRole('radio', { name: /N₂/ }));
     expect(neq()).toBe('755,6');
     expect(screen.getByText(/Kapacita LIN/)).toBeTruthy();
-    expect(within(results()).getByText('SG360HF')).toBeTruthy();
+    expect(within(ill()).getByText('SG360HF')).toBeTruthy();
   });
   it('T_min −35 °C a T_out −30 °C → posouzení velikosti „nelze“', () => {
     render(<App />);

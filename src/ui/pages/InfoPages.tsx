@@ -49,7 +49,7 @@ const EQUATIONS: readonly { title: string; eq: string[]; notes: string[] }[] = [
   {
     title: '5.1 Hmotnostní průtok',
     eq: ['ρn = ρ(látka; 0 °C; 1,01325 bar) – reálný plyn ze stavové rovnice', 'ṁ [kg/s] = V̇n [Nm³/h] · ρn / 3600'],
-    notes: ['O₂: ρn = 1,42903 kg/Nm³; N₂: ρn = 1,25039 kg/Nm³.'],
+    notes: ['O₂: ρn = 1,42903 kg/Nm³; N₂: ρn = 1,25039 kg/Nm³; Ar: ρn = 1,78396 kg/Nm³.'],
   },
   {
     title: '5.2 Energetická bilance',
@@ -61,7 +61,7 @@ const EQUATIONS: readonly { title: string; eq: string[]; notes: string[] }[] = [
     ],
     notes: [
       'Ustálený otevřený systém, bez práce, změny kinetické a potenciální energie zanedbány.',
-      'p je absolutní tlak; tlaková ztráta zanedbána – 0,5 bar by zvýšila Q asi o +0,05 % (ověřeno: O₂ +0,051 %, N₂ +0,046 %).',
+      'p je absolutní tlak; tlaková ztráta zanedbána – 0,5 bar by zvýšila Q o +0,05 % ve výchozím případu (O₂ +0,051 %, N₂ +0,046 %, Ar +0,057 %), při 30–40 bar a a T_out −60 °C až o +0,15 % (nezávislá kontrola).',
       'Referenční stav: h = 0 pro nasycenou kapalinu při 1,01325 bar (na výsledek nemá vliv).',
     ],
   },
@@ -81,8 +81,9 @@ const EQUATIONS: readonly { title: string; eq: string[]; notes: string[] }[] = [
       'N_eq = UA_potř / UA₁;  tepelná náročnost = N_eq·k / V̇n;  nejmenší kapacita větve = MAX(V̇n; N_eq·k)',
     ],
     notes: [
-      'Model předpokládá stejné U jako při katalogových podmínkách. V mrazu to neplatí (námraza, chybějící latentní teplo, studený vzduch u jednotky) – výsledek je OPTIMISTICKÝ.',
-      'LMTD s konstantním c_p nadhodnocuje UA_II zhruba o 1,5 % – na bezpečné straně.',
+      'Model předpokládá stejné U jako při katalogových podmínkách. V mrazu to neplatí (námraza, chybějící latentní teplo, studený vzduch u jednotky) – tyto vlivy převládají, výsledek je OPTIMISTICKÝ.',
+      'LMTD s konstantním c_p nadhodnocuje UA_II v potřebě i v UA₁; v poměru N_eq se chyba částečně ruší: pod ~14 bar a je N_eq o 1,5–4,5 % nižší (optimistické), při 30–40 bar a o 6–14 % vyšší (nezávislá kontrola integrací přes h(T)).',
+      'UA₁ předpokládá nasycenou kapalinu při katalogovém tlaku – konzervativní volba (kapalina na bodu varu by dala UA₁ asi o 10 % vyšší).',
       'Nejmenší kapacita větve je dolní hranice pro poptávku, nikdy doporučený model.',
     ],
   },
@@ -93,7 +94,11 @@ const EQUATIONS: readonly { title: string; eq: string[]; notes: string[] }[] = [
       'nad vodou (T ≥ 0 °C): e_s = 6,112·exp(17,62·T/(243,12 + T)) hPa',
       'nad ledem (T < 0 °C): e_s = 6,112·exp(22,46·T/(272,62 + T)) hPa',
     ],
-    notes: ['Latentní potenciál ~2,8 kJ na 1 g vymrzlé vody.', 'Předepsaný vzorec dává pro 20 °C / 75 % hodnotu 10,93 g/kg.'],
+    notes: [
+      'Latentní potenciál ~2,8 kJ na 1 g vymrzlé vody.',
+      'Předepsaný vzorec dává pro 20 °C / 75 % hodnotu 10,93 g/kg.',
+      'Pod 0 °C je RH vztažená k ledu (podle zadání); meteorologická RH se udává vůči vodě (−15 °C / 85 %: 1,00 místo 0,86 g/kg).',
+    ],
   },
   {
     title: 'Vlastnosti látek',

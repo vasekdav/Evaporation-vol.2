@@ -59,9 +59,19 @@ describe('doporučení konceptu (kap. 6.3)', () => {
     expect(r.approach_K).toBe(5);
     expect(ids(r)).toEqual(expect.arrayContaining(['ATM_HEATER:zvážit', 'FORCED_DRAFT:zvážit', 'WATER_BATH:zvážit']));
   });
-  it('přiblížení přesně 10 K → bez alternativ', () => {
-    const r = recommendConcept({ ...base, T_des_C: -10, T_out_C: -20 });
+  it('přiblížení přesně 10 K → bez alternativ k atmosférickému odpařovači', () => {
+    const r = recommendConcept({ ...base, T_des_C: -10, T_out_C: -20, frostWeeks: 0 });
     expect(ids(r).filter((x) => x.endsWith('zvážit'))).toEqual([]);
+  });
+  it('mráz bez zadané délky mrazového období → přepínané větve zvážit (nezávislá kontrola praxe)', () => {
+    expect(ids(recommendConcept({ ...base, T_des_C: -10, T_out_C: -20 }))).toContain('SWITCHED:zvážit');
+  });
+  it('24/7 v mrazu → zvážit dohřev / třetí větev a nucený tah', () => {
+    const r = recommendConcept({ ...base, continuous24_7: true, T_des_C: -15, T_out_C: -30 });
+    expect(ids(r)).toEqual(expect.arrayContaining(['SWITCHED:doporučeno', 'ATM_HEATER:zvážit', 'FORCED_DRAFT:zvážit']));
+  });
+  it('plánovaný dohřev (T_skut < T_out) → dohřev jako doplněk', () => {
+    expect(ids(recommendConcept({ ...base, T_actual_out_C: -40 }))).toContain('ATM_HEATER:doplněk');
   });
   it('dostupnost N+1 a záložní ohřívač', () => {
     expect(ids(recommendConcept({ ...base, availability: 'N+1' }))).toContain('N_PLUS_1:doplněk');

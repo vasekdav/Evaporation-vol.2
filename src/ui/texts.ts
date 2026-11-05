@@ -31,7 +31,7 @@ export const FIELD = {
     label: 'Provozní tlak (operating pressure)',
     help:
       'Tlak určuje teplotu varu a výparné teplo. S rostoucím tlakem roste T_sat a klesá výparné teplo, roste ale ' +
-      'podíl přehřátí. Tlaková ztráta se zanedbává (0,5 bar změní výkon jen o +0,05 %).',
+      'podíl přehřátí. Tlaková ztráta se zanedbává (0,5 bar tlakové ztráty by zvýšilo výkon o +0,05 až +0,15 % podle tlaku a T_out).',
   },
   p_atm: {
     label: 'Atmosférický tlak',
@@ -115,10 +115,11 @@ export const FIELD = {
       'modely různých výrobců nesrovnávej bez přepočtu. Použije se v posouzení velikosti.',
   },
   k: {
-    label: 'Koeficient námrazy / rezervy k',
+    label: 'Koeficient námrazy / rezervy k (násobí N_eq)',
     help:
-      'Zadává uživatel; aplikace nenavrhuje vlastní „univerzální“ hodnotu. Orientačně 1,2–1,5× jen při přiblížení ' +
-      'výstupní teploty k okolí ≈ 10 K – odhad praxe, ne norma; rozhoduje přepočet výrobce.',
+      'Zadává uživatel; aplikace nenavrhuje vlastní „univerzální“ hodnotu. Pozor: k násobí ideální ekvivalent N_eq, ne průtok. ' +
+      'Orientační pravidlo praxe „1,2–1,5× průtoku“ (jen při přiblížení výstupní teploty k okolí ≈ 10 K) se týká PRŮTOKU – ' +
+      'aplikace ho ukazuje zvlášť u posouzení velikosti. Rozhoduje přepočet výrobce.',
   },
 } satisfies Record<string, FieldText>;
 

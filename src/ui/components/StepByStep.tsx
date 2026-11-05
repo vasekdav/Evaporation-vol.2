@@ -49,7 +49,7 @@ export function StepByStep({ ev }: { ev: Evaluation }) {
           </>
         ) : undefined,
       result: <Qty v={d.p_bar_a} unit="bar a" src="VYPOCET" d={5} />,
-      note: 'Tlaková ztráta zanedbána: 0,5 bar by výkon zvýšila asi o +0,05 %.',
+      note: 'Tlaková ztráta zanedbána: 0,5 bar tlakové ztráty by zvýšilo výkon o +0,05 až +0,15 % podle tlaku a T_out.',
     },
     {
       n: 3,

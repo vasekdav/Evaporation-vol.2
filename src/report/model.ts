@@ -146,7 +146,10 @@ function resultSections(ev: Evaluation, basis: CatalogBasis | undefined): Report
     num('Hmotnostní průtok ṁ', d.m_kg_h, 'kg/h', 'VYPOCET', 2),
     num('Použitý absolutní tlak', d.p_bar_a, 'bar a', 'VYPOCET', 5),
     num(`Spotřeba ${pol.liquidLabel} za den (${fmt(c.hours, 0)} h)`, c.mass_kg, 'kg', 'VYPOCET', 0),
-    num(`Spotřeba ${pol.liquidLabel} za den – objem`, c.volume_m3, 'm³', 'VYPOCET', 2),
+    num(`Spotřeba ${pol.liquidLabel} za den – objem při stavu na vstupu`, c.volume_m3, 'm³', 'VYPOCET', 2),
+    ...(c.volume_nbp_m3 !== null
+      ? [num(`Spotřeba ${pol.liquidLabel} za den – objem jako kapalina při 1,01325 bar`, c.volume_nbp_m3, 'm³', 'VYPOCET', 2)]
+      : []),
   ];
   if (ev.reheat?.ok) rows.push(num('Výkon dohřevu', ev.reheat.Q_kW, 'kW', 'VYPOCET', 3));
   else if (ev.reheat) rows.push(txt('Výkon dohřevu', ev.reheat.reason, 'VYPOCET'));
@@ -169,7 +172,7 @@ function resultSections(ev: Evaluation, basis: CatalogBasis | undefined): Report
     ],
     paragraphs: [
       `Vlastnosti: ${getProvider(ev.input.fluid).meta.eos ?? ''}, CoolProp ${getProvider(ev.input.fluid).meta.coolprop_version}. ` +
-        'Referenční stav h = 0 pro nasycenou kapalinu při 1,01325 bar. Tlaková ztráta zanedbána (0,5 bar ≈ +0,05 % výkonu).',
+        'Referenční stav h = 0 pro nasycenou kapalinu při 1,01325 bar. Tlaková ztráta zanedbána (0,5 bar tlakové ztráty by zvýšilo výkon o +0,05 až +0,15 % podle tlaku a T_out).',
     ],
   });
 

@@ -132,7 +132,7 @@ export function buildInquiry(ev: Evaluation, basis?: CatalogBasis): InquiryItem[
     {
       id: 'dp',
       title: 'Max. tlaková ztráta',
-      why: 'Výrobce podle ní volí počet průchodů a průřez; tlaková ztráta snižuje tlak za odpařovačem (na výkon má malý vliv: 0,5 bar ≈ +0,05 %).',
+      why: 'Výrobce podle ní volí počet průchodů a průřez; tlaková ztráta snižuje tlak za odpařovačem (na výkon má malý vliv: 0,5 bar ≈ +0,05 až +0,15 %).',
       fields: [todo('dp.max', 'Max. tlaková ztráta při špičkovém průtoku', 'bar')],
     },
     {

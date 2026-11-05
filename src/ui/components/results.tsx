@@ -99,7 +99,15 @@ export function ResultCard({ ev }: { ev: Evaluation }) {
         </Stat>
         <Stat label={`Spotřeba ${policy.liquidLabel} za den`} note={`Při ${c.hours === 24 ? 'provozu 24/7' : `${c.hours} h provozu denně`} a špičkovém průtoku.`}>
           <Qty v={c.mass_kg} unit="kg" src="VYPOCET" d={0} />
-          <Qty v={c.volume_m3} unit="m³" src="VYPOCET" d={2} className="sub" />
+          <span className="sub">
+            <Qty v={c.volume_m3} unit="m³" src="VYPOCET" d={2} /> <span className="muted" data-narrative="">při stavu na vstupu</span>
+          </span>
+          {c.volume_nbp_m3 !== null ? (
+            <span className="sub">
+              <Qty v={c.volume_nbp_m3} unit="m³" src="VYPOCET" d={2} />{' '}
+              <span className="muted" data-narrative="">jako kapalina při 1,01325 bar</span>
+            </span>
+          ) : null}
         </Stat>
         {ev.reheat ? (
           <Stat label="Výkon dohřevu">

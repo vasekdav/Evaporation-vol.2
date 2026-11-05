@@ -1251,3 +1251,42 @@ td {
   border: 1px solid var(--err);
   border-radius: var(--radius);
 }
+
+.below-practice {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--warn);
+}
+.illustration tr.below td {
+  color: var(--muted);
+}
+.existing {
+  margin-top: 14px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.inline-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.88rem;
+  min-width: 220px;
+}
+.existing-verdict {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.v-BELOW_FLOW,
+.v-BELOW_IDEAL {
+  background: var(--err-bg);
+  color: var(--err);
+}
+.v-ABOVE_IDEAL_BELOW_PRACTICE {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.v-ABOVE_PRACTICE {
+  background: var(--info-bg);
+  color: var(--info);
+}

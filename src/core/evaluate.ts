@@ -69,7 +69,7 @@ export function evaluate(input: DesignInput, opts: EvaluateOptions = {}): Evalua
       T_out_C: input.T_out_C,
     });
     base.duty = duty;
-    base.consumptionPerDay = consumption(duty, input.continuous24_7 ? 24 : input.hoursPerDay);
+    base.consumptionPerDay = consumption(duty, input.continuous24_7 ? 24 : input.hoursPerDay, props.sat(1.01325).rho_l_kg_m3);
     base.reheat = reheatOutcome(props, duty, input.T_actual_out_C);
     const basis = findBasis(input.catalogBasisId, extra)!;
     // velikost zvlášť: chyba katalogového základu (např. mimo rozsah tabulek) nesmí zneplatnit výkon
@@ -88,6 +88,7 @@ export function evaluate(input: DesignInput, opts: EvaluateOptions = {}): Evalua
       TSL_C: input.TSL_C,
       TSL_margin_K: input.TSL_margin_K,
       availability: input.availability,
+      T_actual_out_C: input.T_actual_out_C,
     });
   } catch (e) {
     if (!(e instanceof PropertyRangeError)) throw e;

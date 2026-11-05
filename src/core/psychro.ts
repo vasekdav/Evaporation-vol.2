@@ -4,6 +4,9 @@
  *   x [g/kg] = 622·φ·e_s / (p − φ·e_s),   p = 1013,25 hPa
  *   Magnus: nad vodou (T ≥ 0 °C) e_s = 6,112·exp(17,62·T/(243,12+T)) hPa
  *           nad ledem (T < 0 °C) e_s = 6,112·exp(22,46·T/(272,62+T)) hPa
+ *
+ * Pod 0 °C je RH vztažená k ledu (podle zadání). Meteorologická RH se udává vůči vodě –
+ * při −15 °C / 85 % by vyšlo 1,00 místo 0,86 g/kg.
  */
 
 export const P_AIR_HPA = 1013.25;

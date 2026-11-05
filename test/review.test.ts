@@ -142,3 +142,32 @@ describe('software – robustnost vůči poškozeným datům', () => {
     expect(p.inquiry).toEqual({ b: 'ok' });
   });
 });
+
+describe('dávka 2 – velikost a S3', () => {
+  it('kontrola stávajícího odpařovače: pod průtokem / pod ideální mezí / nad mezí s výhradou', async () => {
+    const { assessExisting } = await import('../src/core/sizing');
+    const e = evaluate({ ...defaultInput('O2'), T_amb_C: -15, T_out_C: -20 });
+    if (!e.sizing?.ok) throw new Error('sizing');
+    expect(assessExisting(900, e.sizing, 1000).verdict).toBe('BELOW_FLOW');
+    expect(assessExisting(1100, e.sizing, 1000).verdict).toBe('BELOW_IDEAL'); // N_eq 1247,8
+    const a = assessExisting(1290, e.sizing, 1000);
+    expect(a.verdict).toBe('ABOVE_PRACTICE');
+    expect(a.text).toContain('NEZNAMENÁ, že vyhoví');
+    const e0 = evaluate(defaultInput('O2'));
+    if (!e0.sizing?.ok) throw new Error('sizing');
+    expect(assessExisting(1100, e0.sizing, 1000).verdict).toBe('ABOVE_IDEAL_BELOW_PRACTICE');
+  });
+  it('spotřeba: objem i jako kapalina při 1,01325 bar (N₂ 32 bar nasycená)', () => {
+    const e = evaluate({ ...defaultInput('N2'), pressure: { value: 32, kind: 'abs' }, liquid: { kind: 'saturated' } });
+    const c = e.consumptionPerDay!;
+    expect(c.volume_nbp_m3).not.toBeNull();
+    expect(c.volume_m3 / c.volume_nbp_m3!).toBeGreaterThan(1.8); // ρ 428 vs. 807 kg/m³
+  });
+  it('upozornění u velikosti: LMTD text odpovídá nezávislé kontrole (ne „na bezpečné straně“)', () => {
+    const e = evaluate(defaultInput('O2'));
+    if (!e.sizing?.ok) throw new Error('sizing');
+    const w = e.sizing.warnings.join(' ');
+    expect(w).not.toContain('na bezpečné straně');
+    expect(w).toContain('1,5–4,5 % NÍŽ');
+  });
+});
