@@ -112,14 +112,15 @@ describe('uložení a načtení případu', () => {
     fireEvent.change(byLabel(/^Teplota okolí pro výpočet/), { target: { value: '-15' } });
     const neq = screen.getByTestId('Neq').textContent;
     fireEvent.click(screen.getByRole('button', { name: 'Kopírovat odkaz' }));
-    await waitFor(() => expect(copied).toContain('?case='));
+    await waitFor(() => expect(copied).toContain('#case='));
     cleanup();
     window.localStorage.clear();
-    window.history.replaceState(null, '', new URL(copied).pathname + new URL(copied).search);
+    window.history.replaceState(null, '', new URL(copied).pathname + new URL(copied).hash);
     render(<App />);
     expect(screen.getByText('Případ načten ze sdíleného odkazu.')).toBeTruthy();
     expect(screen.getByTestId('Neq').textContent).toBe(neq);
     expect(window.location.search).toBe('');
+    expect(window.location.hash).toBe('');
   });
   it('poškozený odkaz → hláška, výchozí případ', () => {
     window.history.replaceState(null, '', '/?case=nesmysl');

@@ -115,7 +115,7 @@ describe('model reportu', () => {
     expect(Q.source).toBe('VYPOCET');
     // každý řádek má jednotku nebo je textový, a vždy původ
     for (const s of report.sections) for (const r of s.rows ?? []) expect(r.source).not.toBe('');
-    expect(report.sections.find((s) => s.id === 'checks')!.table!.body).toHaveLength(8);
+    expect(report.sections.find((s) => s.id === 'checks')!.table!.body).toHaveLength(12);
     const w = report.sections.find((s) => s.id === 'warnings')!.bullets!.join(' ');
     expect(w).toContain('není náhradou výběru a garance výrobce');
     expect(w).toContain('OPTIMISTICKÉ');
@@ -187,7 +187,7 @@ describe('Excel', () => {
     };
     expect(find('Vstupy', 'Špičkový návrhový průtok')).toBe(1000);
     expect(find('Výsledky', 'Návrhový výkon Q') as number).toBeCloseTo(139.711, 2);
-    expect(back.getWorksheet('Kontroly')!.rowCount).toBe(9);
+    expect(back.getWorksheet('Kontroly')!.rowCount).toBe(13);
     expect(String(back.getWorksheet('Info')!.getCell('B2').value)).toBe('9.9.9');
     let inq = '';
     back.getWorksheet('Poptávka')!.eachRow((r) => (inq += ` ${String(r.getCell(2).value)} ${String(r.getCell(3).value)}`));
@@ -217,9 +217,12 @@ describe('uložení případu a sdílitelný odkaz', () => {
   it('sdílitelný odkaz: tam a zpět, včetně diakritiky', () => {
     const c = makeCase(input, [own], { 'project.site': 'Ústí nad Labem – areál č. 3' }, '9.9.9', NOW);
     const url = shareUrl(c, 'https://example.org/app/index.html#overeni');
-    const param = new URL(url).searchParams.get('case')!;
+    const u = new URL(url);
+    // data ve fragmentu (#case=…) – neposílají se na server
+    expect(u.search).toBe('');
+    expect(u.hash.startsWith('#case=')).toBe(true);
+    const param = u.hash.slice('#case='.length);
     expect(param).toBe(caseToParam(c));
-    expect(url).not.toContain('#');
     const p = caseFromParam(param);
     expect(p.ok && p.inquiry['project.site']).toBe('Ústí nad Labem – areál č. 3');
     expect(p.ok && p.input).toEqual(input);

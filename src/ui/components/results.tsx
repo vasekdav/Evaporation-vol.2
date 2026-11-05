@@ -7,7 +7,8 @@ import { Qty, SourceTag } from './Qty';
 const STATUS_CLASS: Record<Evaluation['status'], string> = {
   ALL_OK: 'st-ok',
   VALID_WITH_WARNINGS: 'st-warn',
-  DESIGN_FAILS_TSL: 'st-fail',
+  INCOMPLETE: 'st-warn',
+  DESIGN_FAILS: 'st-fail',
   INVALID: 'st-invalid',
 };
 
@@ -139,7 +140,7 @@ function CheckRow({ c }: { c: CheckResult }) {
         <div className="check-head">
           <strong>{c.title}</strong>
           <span className="level">{c.level}</span>
-          {c.blocking ? <span className="blocks">blokuje výsledek</span> : null}
+          {c.blocking ? <span className="blocks">blokuje výsledek</span> : c.designFailure ? <span className="blocks">návrh nevyhovuje</span> : null}
           {c.reference ? (
             <span className="ref" data-narrative="">
               {c.reference}
@@ -155,15 +156,17 @@ function CheckRow({ c }: { c: CheckResult }) {
 export function ChecksPanel({ ev }: { ev: Evaluation }) {
   return (
     <section className="card" aria-labelledby="chk-h">
-      <h2 id="chk-h">Kontroly K1–K8</h2>
+      <h2 id="chk-h">Kontroly K1–K8 a doplňkové D1–D4</h2>
       <ul className="checks">
         {ev.checks.map((c) => (
           <CheckRow key={c.id} c={c} />
         ))}
       </ul>
       <p className="note" data-narrative="">
-        Kontroly hlídají rozsah dat a bezpečnost (křehký lom a TSL podle AIGA 027). CHYBA v K1–K6 výsledek zablokuje;
-        CHYBA v K8 výkon nechá platný, ale návrh nevyhovuje.
+        K1–K8 hlídají rozsah dat a bezpečnost (křehký lom a TSL podle AIGA 027) podle zadání; D1–D4 doplňují úplnost údajů,
+        úsek před dohřevem, věrohodnost modelu a provoz vs. katalog. CHYBA ve vstupech výsledek zablokuje; CHYBA návrhu (TSL,
+        křehký lom v mrazu) výkon nechá platný, ale návrh nevyhovuje. Kontroly jsou statická kontrola konzistence návrhových
+        teplot – nenahrazují HAZOP / LOPA, ověření SIL ani projekt.
       </p>
     </section>
   );

@@ -1242,3 +1242,12 @@ td {
   margin-bottom: 6px;
   overflow-wrap: anywhere;
 }
+
+.crash {
+  max-width: 640px;
+  margin: 40px auto;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--err);
+  border-radius: var(--radius);
+}

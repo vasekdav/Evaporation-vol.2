@@ -221,7 +221,7 @@ function resultSections(ev: Evaluation, basis: CatalogBasis | undefined): Report
 function checksSection(ev: Evaluation): ReportSection {
   return {
     id: 'checks',
-    title: 'Kontroly K1–K8',
+    title: 'Kontroly K1–K8 a doplňkové D1–D4',
     table: {
       head: ['Kontrola', 'Stav', 'Vysvětlení', 'Norma'],
       body: ev.checks.map((c) => [`${c.id} ${c.title}`, c.level, c.message, c.reference ?? '']),

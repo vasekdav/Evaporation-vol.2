@@ -221,7 +221,7 @@ export function runVerification(): VerificationRow[] {
     rows.push(
       checkRow('T_out −25 °C a TSL −25 °C', f, { ...defaultInput(f), T_out_C: -25, TSL_C: -25 }, 'K8 CHYBA, „Výkon platný, ale NÁVRH NEVYHOVUJE“', (e) => {
         const k = level(e, 'K8');
-        return { pass: k.level === 'CHYBA' && e.status === 'DESIGN_FAILS_TSL', actual: `K8 ${k.level}; ${e.statusText}` };
+        return { pass: k.level === 'CHYBA' && e.status === 'DESIGN_FAILS', actual: `K8 ${k.level}; ${e.statusText}` };
       }),
       checkRow('T_min −35 °C a T_out −30 °C', f, { ...defaultInput(f), T_min_site_C: -35, T_out_C: -30 }, 'K4 POZOR, posouzení velikosti „nelze“', (e) => {
         const k = level(e, 'K4');

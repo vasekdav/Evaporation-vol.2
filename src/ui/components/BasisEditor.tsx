@@ -51,7 +51,19 @@ export function BasisEditor({ selectedId, customBases, onSelect, onChangeBases, 
       source: 'vlastní zadání',
       modelsId: null,
     });
-  const valid = draft !== null && draft.name.trim() !== '' && draft.T_amb_C !== null && Number.isFinite(draft.T_amb_C);
+  const draftError = (() => {
+    if (!draft) return null;
+    if (draft.name.trim() === '') return 'Zadej název.';
+    if (draft.T_amb_C === null || !Number.isFinite(draft.T_amb_C) || draft.T_amb_C < -50 || draft.T_amb_C > 50)
+      return 'Teplota okolí musí být −50 až +50 °C.';
+    if (draft.RH_pct !== null && !(draft.RH_pct >= 0 && draft.RH_pct <= 100)) return 'Vlhkost musí být 0–100 %.';
+    if (draft.pressure && !(draft.pressure.value > 0 && draft.pressure.value <= 100)) return 'Tlak musí být kladný a nejvýš 100 bar.';
+    if (draft.approach_K !== null && !(draft.approach_K >= 0.1 && draft.approach_K <= 60)) return 'Přiblížení musí být 0,1–60 K.';
+    if (draft.runtime_h !== null && !(draft.runtime_h > 0 && draft.runtime_h <= 168)) return 'Doba provozu musí být 0–168 h.';
+    if (draft.wind_m_s !== null && !(draft.wind_m_s >= 0 && draft.wind_m_s <= 50)) return 'Vítr musí být 0–50 m/s.';
+    return null;
+  })();
+  const valid = draft !== null && draftError === null;
   const save = () => {
     if (!draft || !valid) return;
     const b: CatalogBasis = { ...draft, T_amb_C: draft.T_amb_C!, pressureVerified: draft.pressure === null ? null : draft.pressureVerified };
@@ -153,6 +165,11 @@ export function BasisEditor({ selectedId, customBases, onSelect, onChangeBases, 
             Pro výpočet UA₁ je potřeba teplota okolí, tlak a přiblížení. Údaje opiš z katalogu výrobce – aplikace žádné nedoplňuje.
             Vlastní základy se ukládají jen v tomto prohlížeči.
           </p>
+          {draftError ? (
+            <p className="hint err" role="alert">
+              {draftError}
+            </p>
+          ) : null}
           <div className="row">
             <button type="button" className="btn btn-primary" onClick={save} disabled={!valid}>
               Uložit

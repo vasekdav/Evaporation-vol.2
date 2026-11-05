@@ -31,6 +31,7 @@ import sys
 from pathlib import Path
 
 import CoolProp
+import CoolProp.CoolProp as CPmod
 from CoolProp.CoolProp import PropsSI
 
 COOLPROP_VERSION = "7.2.0"
@@ -174,13 +175,16 @@ def build_tables(key: str) -> dict:
     assert p_grid[0] == d["p_min_bar_a"] and p_grid[-1] == d["p_max_bar_a"]
 
     # --- nasycení podle tlaku
-    sat = {"p_bar_a": p_grid, "T_C": [], "h_l": [], "h_v": [], "rho_l": []}
+    sat = {"p_bar_a": p_grid, "T_C": [], "h_l": [], "h_v": [], "rho_l": [], "T_melt_C": []}
+    AS = CPmod.AbstractState("HEOS", cp)
     for p in p_grid:
         pa = p * 1e5
         sat["T_C"].append(r6(PropsSI("T", "P", pa, "Q", 0, cp) - K0))
         sat["h_l"].append(r6(f.sat_p(pa, 0, "H")))
         sat["h_v"].append(r6(f.sat_p(pa, 1, "H")))
         sat["rho_l"].append(r6(f.sat_p(pa, 0, "D")))
+        # křivka tání: pod ní je látka pevná (u Ar nad ~14 bar a leží nad trojným bodem)
+        sat["T_melt_C"].append(r6(AS.melting_line(CPmod.iT, CPmod.iP, pa) - K0))
 
     # --- plyn h(p, T)
     gas = {"p_bar_a": p_grid, "T_C": GAS_T_GRID_C, "h": []}

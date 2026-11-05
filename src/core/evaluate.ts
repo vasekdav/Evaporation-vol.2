@@ -72,7 +72,13 @@ export function evaluate(input: DesignInput, opts: EvaluateOptions = {}): Evalua
     base.consumptionPerDay = consumption(duty, input.continuous24_7 ? 24 : input.hoursPerDay);
     base.reheat = reheatOutcome(props, duty, input.T_actual_out_C);
     const basis = findBasis(input.catalogBasisId, extra)!;
-    base.sizing = sizeBranch(props, duty, basis, c.T_des_C, input.k);
+    // velikost zvlášť: chyba katalogového základu (např. mimo rozsah tabulek) nesmí zneplatnit výkon
+    try {
+      base.sizing = sizeBranch(props, duty, basis, c.T_des_C, input.k);
+    } catch (e) {
+      if (!(e instanceof PropertyRangeError)) throw e;
+      base.sizing = { ok: false, reason: `Katalogový základ „${basis.name}“ je mimo rozsah dat: ${e.message}` };
+    }
     base.concept = recommendConcept({
       hoursPerDay: input.hoursPerDay,
       continuous24_7: input.continuous24_7,

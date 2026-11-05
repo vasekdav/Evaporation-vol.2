@@ -58,6 +58,8 @@ export interface PropertyProvider {
   gasH(p_bar_a: number, T_C: number): number;
   /** Podchlazená / stlačená kapalina při (p, T), T ≤ T_sat(p). */
   liquid(p_bar_a: number, T_C: number): LiquidState;
+  /** Teplota tání při tlaku p [°C] – pod ní je látka pevná. */
+  meltT_C(p_bar_a: number): number;
 }
 
 export type PropertyRangeCode =

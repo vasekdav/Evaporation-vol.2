@@ -138,10 +138,10 @@ describe('interakce', () => {
     expect(help.textContent).toContain('TSL se nikdy nesnižuje');
   });
 
-  it('všech 8 kontrol je v semaforu', () => {
+  it('všech 8 kontrol + 4 doplňkové jsou v semaforu', () => {
     render(<App />);
     const list = within(results()).getAllByRole('listitem').filter((li) => li.hasAttribute('data-check'));
-    expect(list.map((li) => li.getAttribute('data-check'))).toEqual(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K8']);
+    expect(list.map((li) => li.getAttribute('data-check'))).toEqual(['K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K8', 'D1', 'D2', 'D3', 'D4']);
   });
 
   it('postup výpočtu ukazuje mezihodnoty (T_sat −161,66 °C)', () => {

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { findBasis } from '../core/catalog';
 import { evaluate } from '../core/evaluate';
 import { getProvider } from '../core/properties';
-import { CASE_PARAM, caseFromParam, type ParsedCase } from '../report/caseFile';
+import { takeCaseFromUrl, type ParsedCase } from '../report/caseFile';
 import { ConceptPanel } from './components/ConceptPanel';
 import { ExportBar } from './components/ExportBar';
 import { InputPanel } from './components/InputPanel';
@@ -36,22 +36,13 @@ const pageFromHash = (): PageId => {
   return (PAGES.find((p) => p.id === h)?.id ?? 'vypocet') as PageId;
 };
 
-/** Případ ze sdíleného odkazu (?case=…), načte se jednou při startu. */
-function readCaseFromUrl(): ParsedCase | null {
-  try {
-    const u = new URL(window.location.href);
-    const param = u.searchParams.get(CASE_PARAM);
-    if (!param) return null;
-    u.searchParams.delete(CASE_PARAM);
-    window.history.replaceState(null, '', u.toString());
-    return caseFromParam(param);
-  } catch {
-    return null;
-  }
+interface AppProps {
+  /** Případ ze sdíleného odkazu, přečtený před vykreslením (main.tsx). Bez něj se adresa přečte zde. */
+  initialCase?: ParsedCase | null;
 }
 
-export function App() {
-  const [urlCase] = useState(readCaseFromUrl);
+export function App({ initialCase }: AppProps = {}) {
+  const [urlCase] = useState(() => (initialCase !== undefined ? initialCase : takeCaseFromUrl()));
   const okCase = urlCase?.ok ? urlCase : null;
   const [input, setInput, reset] = useDesignInput(okCase?.input);
   const [customBases, setCustomBases] = useCustomBases(okCase?.customBasis);

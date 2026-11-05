@@ -26,6 +26,8 @@ export interface PropertyTables {
     h_l: number[];
     h_v: number[];
     rho_l: number[];
+    /** křivka tání (CoolProp melting_line) */
+    T_melt_C: number[];
   };
   gas: {
     p_bar_a: number[];
@@ -80,6 +82,11 @@ export class TableProvider implements PropertyProvider {
       r_kJ_kg: h_v - h_l,
       rho_l_kg_m3: lerpAt(s.rho_l, br),
     };
+  }
+
+  meltT_C(p_bar_a: number): number {
+    this.checkP(p_bar_a);
+    return lerpAt(this.t.sat.T_melt_C, bracket(this.t.sat.p_bar_a, p_bar_a)!);
   }
 
   gasH(p_bar_a: number, T_C: number): number {

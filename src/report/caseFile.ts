@@ -5,7 +5,7 @@
 import type { CatalogBasis } from '../core/catalog';
 import type { DesignInput } from '../core/input';
 import type { InquiryOverrides } from '../core/inquiry';
-import { restoreBases, restoreInput } from '../core/restore';
+import { sanitizeBasis, sanitizeInput } from '../core/restore';
 
 export const CASE_SCHEMA = 1;
 export const CASE_APP = 'odparovac';
@@ -53,12 +53,13 @@ export function parseCase(text: string): ParsedCase {
   if (c.app !== CASE_APP) return { ok: false, reason: 'Soubor není případ této aplikace.' };
   if (typeof c.schema !== 'number' || c.schema > CASE_SCHEMA)
     return { ok: false, reason: `Nepodporovaná verze souboru (${String(c.schema)}).` };
-  const input = restoreInput(JSON.stringify(c.input ?? null));
-  const bases = restoreBases(JSON.stringify(c.customBasis ? [c.customBasis] : []));
+  const input = sanitizeInput(c.input);
+  const customBasis = c.customBasis ? sanitizeBasis(c.customBasis) : null;
   const inquiry: Record<string, string> = {};
-  if (c.inquiry && typeof c.inquiry === 'object')
-    for (const [k, v] of Object.entries(c.inquiry)) if (typeof v === 'string') inquiry[k] = v;
-  return { ok: true, input, customBasis: bases[0] ?? null, inquiry };
+  if (c.inquiry && typeof c.inquiry === 'object' && !Array.isArray(c.inquiry))
+    for (const [k, v] of Object.entries(c.inquiry))
+      if (typeof v === 'string' && k.length <= 100 && k !== '__proto__') inquiry[k] = v.slice(0, 5000);
+  return { ok: true, input, customBasis, inquiry };
 }
 
 // --- sdílitelný odkaz: base64url(UTF-8 JSON)
@@ -88,10 +89,32 @@ export function caseFromParam(param: string): ParsedCase {
   }
 }
 
-/** Odkaz na aktuální stránku s případem v URL. */
+/**
+ * Odkaz na aktuální stránku s případem ve fragmentu `#case=…`. Fragment se neposílá
+ * na server, takže data případu nekončí v přístupových lozích hostingu.
+ */
 export function shareUrl(c: CaseFile, base: string): string {
   const u = new URL(base);
-  u.searchParams.set(CASE_PARAM, caseToParam(c));
-  u.hash = '';
+  u.searchParams.delete(CASE_PARAM);
+  u.hash = `${CASE_PARAM}=${caseToParam(c)}`;
   return u.toString();
+}
+
+/**
+ * Přečte případ z adresy (`#case=…`, starší odkazy `?case=…`) a parametr z adresy odstraní.
+ * Volá se jednou před vykreslením aplikace.
+ */
+export function takeCaseFromUrl(): ParsedCase | null {
+  try {
+    const u = new URL(window.location.href);
+    const fromHash = u.hash.startsWith(`#${CASE_PARAM}=`) ? u.hash.slice(CASE_PARAM.length + 2) : null;
+    const param = fromHash ?? u.searchParams.get(CASE_PARAM);
+    if (!param) return null;
+    u.searchParams.delete(CASE_PARAM);
+    if (fromHash !== null) u.hash = '';
+    window.history.replaceState(null, '', u.toString());
+    return caseFromParam(param);
+  } catch {
+    return null;
+  }
 }

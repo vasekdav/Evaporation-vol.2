@@ -172,8 +172,8 @@ describe('9.3 Společné kontroly', () => {
     const k8 = e.checks.find((c) => c.id === 'K8')!;
     expect(k8.level).toBe('CHYBA');
     expect(k8.blocking).toBe(false);
-    expect(e.status).toBe('DESIGN_FAILS_TSL');
-    expect(e.statusText).toContain('Výkon platný, ale NÁVRH NEVYHOVUJE');
+    expect(e.status).toBe('DESIGN_FAILS');
+    expect(e.statusText).toBe('Výkon platný, ale NÁVRH NEVYHOVUJE – TSL');
     expect(e.duty).not.toBeNull();
   });
 
@@ -181,7 +181,9 @@ describe('9.3 Společné kontroly', () => {
     const e = evaluate({ ...defaultInput(f), T_min_site_C: -35, T_out_C: -30 });
     const k4 = e.checks.find((c) => c.id === 'K4')!;
     expect(k4.level).toBe('POZOR');
-    expect(e.status).toBe('VALID_WITH_WARNINGS');
+    // T_des −35 °C ≤ mez potrubí −30 °C: výstup bude v mrazu nutně pod mezí → návrh nevyhovuje (nezávislá kontrola)
+    expect(e.status).toBe('DESIGN_FAILS');
+    expect(e.statusText).toBe('Výkon platný, ale NÁVRH NEVYHOVUJE – křehký lom');
     expect(e.duty).not.toBeNull();
     expect(e.sizing?.ok).toBe(false);
     if (e.sizing && !e.sizing.ok) expect(e.sizing.reason).toContain('nelze');

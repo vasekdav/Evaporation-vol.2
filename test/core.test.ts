@@ -212,7 +212,7 @@ describe('kontroly K1–K8 – větve logiky', () => {
     expect(k.blocking).toBe(true);
     const e = evaluate({ ...defaultInput('O2'), flow: { value: 0, unit: 'Nm3/h' } });
     expect(e.status).toBe('INVALID');
-    expect(e.checks.filter((c) => c.level === 'NEHODNOCENO')).toHaveLength(7);
+    expect(e.checks.filter((c) => c.level === 'NEHODNOCENO')).toHaveLength(11);
   });
   it('K2: O₂ 40 bar a OK, 40,5 bar a CHYBA; N₂ 33 bar a CHYBA (blízko kritického tlaku)', () => {
     expect(evaluate({ ...defaultInput('O2'), pressure: { value: 40, kind: 'abs' } }).status).not.toBe('INVALID');
@@ -239,11 +239,11 @@ describe('kontroly K1–K8 – větve logiky', () => {
     expect(evaluate({ ...defaultInput('O2'), liquid: { kind: 'saturated' } }).duty).not.toBeNull();
   });
   it('K6: pod mezí CHYBA (blokuje), rovno POZOR „bez rezervy“, nad OK s AIGA 027', () => {
-    expect(checkK6(-31, -30).level).toBe('CHYBA');
-    expect(checkK6(-31, -30).blocking).toBe(true);
-    expect(checkK6(-30, -30).level).toBe('POZOR');
-    expect(checkK6(-30, -30).message).toContain('bez rezervy');
-    expect(checkK6(-20, -30).message).toContain('TSL doporučuje AIGA 027');
+    expect(checkK6(-31, -30, 0, null).level).toBe('CHYBA');
+    expect(checkK6(-31, -30, 0, null).blocking).toBe(true);
+    expect(checkK6(-30, -30, 0, null).level).toBe('POZOR');
+    expect(checkK6(-30, -30, 0, null).message).toContain('bez rezervy');
+    expect(checkK6(-20, -30, 0, null).message).toContain('posoudit podle AIGA 027');
   });
   it('K7: nezadáno / INFO / OK', () => {
     expect(checkK7(0, null).level).toBe('NEZADÁNO');
@@ -260,8 +260,10 @@ describe('kontroly K1–K8 – větve logiky', () => {
     expect(checkK8(-20, -30, -32, 5).blocking).toBe(false);
   });
   it('stav výsledku', () => {
-    expect(evaluate({ ...defaultInput('O2'), TSL_C: -28, T_out_C: -20 }).statusText).toBe('Všechny kontroly OK');
-    expect(evaluate({ ...defaultInput('O2'), T_out_C: -30 }).statusText).toBe('Platné – ale viz POZOR'); // K6 rovno mezi
+    expect(evaluate({ ...defaultInput('O2'), TSL_C: -28, T_out_C: -20, T_min_site_C: -5 }).statusText).toBe('Všechny kontroly OK');
+    // chybějící TSL / T_min se do stavu promítají (nezávislá kontrola bezpečnosti)
+    expect(evaluate({ ...defaultInput('O2'), TSL_C: -28, T_out_C: -20 }).statusText).toBe('Neúplné – chybí: min. teplota lokality');
+    expect(evaluate({ ...defaultInput('O2'), T_out_C: -30 }).statusText).toBe('Platné – ale viz POZOR; chybí: TSL, min. teplota lokality'); // K6 rovno mezi
     expect(overallStatus([])).toBe('ALL_OK');
   });
 });
@@ -275,7 +277,9 @@ describe('vstupy', () => {
     const e = evaluate({ ...defaultInput('O2'), T_actual_out_C: -40 });
     expect(e.reheat?.ok).toBe(true);
     if (e.reheat?.ok) expectRel(e.reheat.Q_kW, 3.686);
+    const same = evaluate({ ...defaultInput('O2'), T_actual_out_C: -20 });
+    expect(same.reheat?.ok).toBe(false); // není nižší než návrhová T_out – dohřev není potřeba
     const bad = evaluate({ ...defaultInput('O2'), T_actual_out_C: -70 });
-    expect(bad.reheat?.ok).toBe(false);
+    expect(bad.checks.find((c) => c.id === 'K1')!.level).toBe('CHYBA'); // mimo rozsah dat plynu
   });
 });
