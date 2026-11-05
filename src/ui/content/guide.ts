@@ -19,14 +19,19 @@ export function guideSteps(fluid: FluidId): GuideStep[] {
       ? [
           'Kyslíková čistota: čištění a materiály pro kyslíkovou službu (EIGA Doc 33 / EN 12300), žádné mazivo a nečistoty, certifikát čištění.',
           'Okolí bez hořlavin a mastnoty; obohacení atmosféry kyslíkem při úniku zvyšuje hořlavost oděvů a materiálů.',
+          'Pod zařízením s kapalným kyslíkem žádný asfalt ani hořlavý podklad (beton).',
+          'Automatické přepínací armatury v kyslíku: riziko zapálení adiabatickou kompresí – materiály a pomalé otevírání; rychlosti v potrubí dle EIGA Doc 13.',
+          'Při vnitřní instalaci detekce obohacení O₂.',
         ]
       : fluid === 'N2'
         ? [
             'Riziko udušení při úniku dusíku v uzavřeném prostoru: umístění venku nebo dobře větraný prostor, detekce O₂ podle místa instalace.',
+            'Studený dusík je těžší než vzduch a drží se v jámách a kanálech; výstražné značení a postup pro vstup do uzavřených prostor.',
           ]
         : [
             'Riziko udušení při úniku argonu v uzavřeném prostoru: umístění venku nebo dobře větraný prostor, detekce O₂ podle místa instalace.',
             'Argon je těžší než vzduch – hromadí se v jámách, kanálech, šachtách a sklepech; detekci O₂ umísti nízko.',
+            'Výstražné značení a postup pro vstup do uzavřených prostor.',
           ];
   return [
     {
@@ -86,7 +91,7 @@ export function guideSteps(fluid: FluidId): GuideStep[] {
       n: '5b',
       title: 'Analýza rizik',
       todo: [
-        'HAZOP / LOPA; nejnižší provozní teplota (LTPS) dle AIGA 027 tab. 6.1–6.3.',
+        'HAZOP / LOPA; systém ochrany proti nízké teplotě (LTPS) dle AIGA 027 tab. 6.1–6.3 (ověř v aktuální revizi; evropský ekvivalent EIGA Doc 133).',
         'Požadovaná úroveň SIL pro TSL; řízení změn (MOC) při změně odběru nebo zdroje.',
       ],
       inputs: 'Koncept, P&ID, provozní scénáře.',
@@ -120,6 +125,8 @@ export function guideSteps(fluid: FluidId): GuideStep[] {
         ...safety8,
         'Podklad a odvodnění tajícího ledu, odstupy, zóna mlhy a ledu (viditelnost, kluzkost).',
         'PED a vyhrazená tlaková zařízení, statika a kotvení (námraza, vítr, sníh).',
+        'Pojistné ventily na úsecích, kde může zůstat uzavřená kapalina (odstavená větev, za armaturou TSL, dohřev).',
+        'Padající led z jednotky a potrubí – ochranné pásmo, přístup jen mimo zónu.',
       ],
       inputs: 'Dispozice, nabídka výrobce.',
       outputs: 'Projekt umístění a instalace.',
@@ -131,6 +138,7 @@ export function guideSteps(fluid: FluidId): GuideStep[] {
       todo: [
         'SAT, funkční zkouška ochran (TSL, fail-close armatura), PSSR.',
         'Vyvážení paralelních větví (AIGA 027 čl. 8.10).',
+        'Školení obsluhy; havarijní postupy (únik, omrzliny, OOPP); postup odmrazování s odstavením a zajištěním (LOTO).',
       ],
       inputs: 'Dokumentace, postupy zkoušek.',
       outputs: 'Protokoly zkoušek, povolení provozu.',
@@ -142,6 +150,7 @@ export function guideSteps(fluid: FluidId): GuideStep[] {
       todo: [
         'Log výstupní teploty na konci cyklu; KPI: vypnutí TSL za rok, rezerva nad TSL, selhání přepnutí.',
         'Kontroly námrazy dle AIGA 030.',
+        'Periodické zkoušky celé smyčky TSL (čidlo → logika → armatura) v intervalu z analýzy rizik; evidence přemostění.',
       ],
       inputs: 'Provozní data.',
       outputs: 'Trend rezervy, podklad pro úpravy.',

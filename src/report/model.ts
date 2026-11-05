@@ -236,9 +236,12 @@ function checksSection(ev: Evaluation): ReportSection {
 function warningsSection(ev: Evaluation): ReportSection {
   const bullets = [
     `Stav výsledku: ${ev.statusText}.`,
-    ...ev.checks.filter((c) => c.level === 'POZOR' || c.level === 'CHYBA').map((c) => `${c.id} ${c.level}: ${c.message}`),
+    ...ev.checks
+      .filter((c) => c.level === 'POZOR' || c.level === 'CHYBA' || c.level === 'NEZADÁNO')
+      .map((c) => `${c.id} ${c.level}: ${c.message}`),
     'Výkon v kW je fyzika. Atmosférický odpařovač se nevybírá podle kW, ale podle průtoku v Nm³/h, minimální teploty okolí, vlhkosti a profilu provozu.',
     'Posouzení velikosti je ideální dolní mez (model konstantního U) – OPTIMISTICKÉ. Nikdy nejde o doporučený model.',
+    'Kontroly jsou statická kontrola konzistence návrhových teplot – nenahrazují HAZOP / LOPA, ověření SIL ani projekt.',
     DISCLAIMER,
   ];
   return { id: 'warnings', title: 'Upozornění', bullets };

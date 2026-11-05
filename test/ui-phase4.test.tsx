@@ -55,7 +55,7 @@ describe('poptávka', () => {
     fireEvent.click(screen.getByRole('button', { name: 'použít hodnotu ze vstupů' }));
     expect(screen.getByTestId('inquiry-check').textContent).toBe('Svázaná pole poptávky odpovídají vstupům výpočtu');
     expect(screen.getByText('Kyslíková čistota')).toBeTruthy();
-    expect(screen.getAllByText('Proč to výrobce potřebuje').length).toBe(11);
+    expect(screen.getAllByText('Proč to výrobce potřebuje').length).toBe(13);
   });
   it('změna látky se promítne do poptávky (N₂ → běžná čistota)', () => {
     render(<App />);

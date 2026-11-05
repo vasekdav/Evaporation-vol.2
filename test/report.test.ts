@@ -41,19 +41,30 @@ describe('generátor poptávky', () => {
   it('O₂: všechny položky kap. 8 bod 8, kyslíková čistota, předvyplněno ze vstupů', () => {
     const ev = evaluate(defaultInput('O2'));
     const items = buildInquiry(ev, chart);
+    const f0 = (k: string) => items.flatMap((i) => i.fields).find((x) => x.key === k)!;
     expect(items.map((i) => i.id)).toEqual([
       'project',
       'source',
       'ped',
       'connections',
+      'relief',
       'dp',
       'guarantee',
       'protection',
       'switching',
       'loads',
       'cleanliness',
+      'install',
       'docs',
     ]);
+    // doplněno po nezávislé kontrole (praxe, bezpečnost)
+    expect(f0('relief.req').prefill).toContain('pojistné ventily');
+    expect(f0('prot.req').prefill).toContain('doba zavření'.replace('doba', 'dobu'));
+    expect(f0('guar.sentence').prefill).toContain('na jednu provozní větev');
+    expect(f0('guar.cycle').prefill).toBe('8 h od startu z odmraženého stavu');
+    expect(f0('clean.valves').prefill).toContain('adiabatická komprese');
+    expect(f0('inst.ground').prefill).toContain('bez asfaltu');
+    expect(f0('ped.national').prefill).toContain('250/2021');
     for (const it of items) expect(it.why.length).toBeGreaterThan(20);
     const f = (k: string) => items.flatMap((i) => i.fields).find((x) => x.key === k)!;
     expect(f('guar.peak').prefill).toBe('1 000 Nm³/h (špička)'.replace(' ', ' '));
@@ -236,3 +247,28 @@ describe('uložení případu a sdílitelný odkaz', () => {
     expect(p.ok && p.input.T_out_C).toBe(-30); // chybějící / neplatné hodnoty → výchozí
   });
 });
+
+describe('poptávka – doplňky z nezávislé kontroly', () => {
+  it('N₂ při −209 °C: TS min = teplota kapaliny (ne pevných −196 °C)', () => {
+    const ev = evaluate({ ...defaultInput('N2'), liquid: { kind: 'subcooled', T_C: -205 } });
+    const ts = buildInquiry(ev, chart).flatMap((i) => i.fields).find((f) => f.key === 'ped.ts')!;
+    expect(ts.prefill).toContain('-205 °C'.replace('-', fmtMinus()));
+  });
+  it('24/7 → délka cyklu k doplnění, 2 × 100 % přepínané větve', () => {
+    const ev = evaluate({ ...defaultInput('N2'), continuous24_7: true });
+    const fields = buildInquiry(ev, chart).flatMap((i) => i.fields);
+    expect(fields.find((f) => f.key === 'guar.cycle')!.source).toBe('DOPLNIT');
+    expect(fields.find((f) => f.key === 'project.branches')!.prefill).toContain('2 × 100 % přepínané větve');
+  });
+  it('report: upozornění obsahují NEZADÁNO a výhradu HAZOP / SIL', () => {
+    const { report } = models(defaultInput('O2'));
+    const w = report.sections.find((s) => s.id === 'warnings')!.bullets!.join(' ');
+    expect(w).toContain('K8 NEZADÁNO');
+    expect(w).toContain('nenahrazují HAZOP / LOPA');
+  });
+});
+
+/** Znaménko minus, jak ho vrací formátovač (mění se v dávce UX). */
+function fmtMinus(): string {
+  return new Intl.NumberFormat('cs-CZ').format(-1).replace('1', '');
+}

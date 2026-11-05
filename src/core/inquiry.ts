@@ -71,6 +71,14 @@ export function buildInquiry(ev: Evaluation, basis?: CatalogBasis): InquiryItem[
   const switched = ev.concept?.items.some((i) => i.id === 'SWITCHED' && i.role === 'doporučeno') ?? false;
   const nPlus1 = inp.availability === 'N+1';
   const sizing = ev.sizing?.ok ? ev.sizing : null;
+  const T_in = inp.liquid.kind === 'subcooled' ? inp.liquid.T_C : (ev.duty?.T_sat_C ?? -196);
+  const tsMin = Math.min(-196, T_in);
+  const cycle = inp.continuous24_7 || inp.hoursPerDay > 8 ? null : `${fmt(inp.hoursPerDay, 0)} h`;
+  const guarantee =
+    `${flowPeak.replace(' (špička)', '')} na jednu provozní větev s výstupní teplotou ≥ ${T(inp.T_out_C)} na konci ` +
+    `${cycle ?? '[délka cyklu / interval přepnutí] h'} provozu od startu z odmraženého stavu, při teplotě okolí ` +
+    `${inp.T_min_site_C !== null ? T(inp.T_min_site_C) : '[T_min lokality]'}, RH ${fmt(inp.RH_winter_pct, 0)} %` +
+    `${inp.frostWeeks !== null ? `, ${fmt(inp.frostWeeks, 0)} týdnů mrazu` : ''}. Požadujeme přepočtovou tabulku kapacity podle teploty okolí.`;
 
   return [
     {
@@ -83,9 +91,16 @@ export function buildInquiry(ev: Evaluation, basis?: CatalogBasis): InquiryItem[
         todo('project.deadline', 'Požadovaný termín dodávky', ''),
         field(
           'project.branches',
-          'Počet provozních větví',
-          `${switched ? '2 přepínané provozní větve' : '1 provozní větev'}${nPlus1 ? ' + 1 záložní větev (N+1)' : ''}`,
+          'Počet a uspořádání větví',
+          `${switched ? '2 × 100 % přepínané větve (1 v provozu, 1 odtává)' : '1 provozní větev 100 %'}` +
+            `${nPlus1 ? ' + 1 další záložní větev 100 % (N+1)' : ''}`,
           'PRAXE',
+          true,
+        ),
+        todo(
+          'project.space',
+          'Prostor a dispozice',
+          'Půdorys, max. výška (větší jednotky ~7 m), odstupy od budov a mezi jednotkami, přístup pro odmrazování a údržbu.',
           true,
         ),
       ],
@@ -106,8 +121,14 @@ export function buildInquiry(ev: Evaluation, basis?: CatalogBasis): InquiryItem[
       title: 'PS / TS a kategorie PED',
       why: 'Výrobce navrhuje tloušťky, materiály a posouzení shody podle nejvyššího dovoleného tlaku PS, teplot TS a skupiny tekutiny.',
       fields: [
-        todo('ped.ps', 'PS – nejvyšší dovolený tlak', 'Nejméně nastavení pojistného ventilu zdroje.'),
-        field('ped.ts', 'TS – rozsah teplot', 'min. −196 °C (kryogenní služba vzdušných plynů) / max. dle okolí – potvrď', 'PRAXE'),
+        todo('ped.ps', 'PS – nejvyšší dovolený tlak', 'Nejméně nastavení pojistného ventilu zdroje; u čerpadla jeho uzavírací tlak.'),
+        field(
+          'ped.ts',
+          'TS – rozsah teplot',
+          `min. ${T(tsMin)} (kryogenní služba vzdušných plynů${tsMin < -196 ? '; kapalina chladnější než −196 °C' : ''}) / max. dle okolí – potvrď`,
+          'PRAXE',
+          true,
+        ),
         field(
           'ped.group',
           'Skupina tekutiny dle PED 2014/68/EU',
@@ -116,7 +137,14 @@ export function buildInquiry(ev: Evaluation, basis?: CatalogBasis): InquiryItem[
           true,
         ),
         field('ped.category', 'Kategorie PED', 'stanoví výrobce dle PS a objemu / DN', 'PRAXE'),
-        field('ped.national', 'Vyhrazené tlakové zařízení', 'požadujeme posouzení a podklady dle platné legislativy ČR', 'PRAXE'),
+        field(
+          'ped.national',
+          'Vyhrazené tlakové zařízení',
+          'požadujeme posouzení a podklady dle zákona č. 250/2021 Sb. a NV č. 191/2022 Sb. (ověř aktuální znění); revize a zkoušky zůstávají povinností provozovatele',
+          'PRAXE',
+          false,
+          { multiline: true },
+        ),
       ],
     },
     {
@@ -127,6 +155,24 @@ export function buildInquiry(ev: Evaluation, basis?: CatalogBasis): InquiryItem[
         todo('conn.inlet', 'Vstup (DN, PN, druh: příruba / návarek)', ''),
         todo('conn.outlet', 'Výstup (DN, PN, druh)', ''),
         field('conn.pipe', 'Min. návrhová teplota navazujícího potrubí', T(inp.T_pipe_min_C), 'VSTUP', true),
+        todo('conn.material', 'Materiál výstupu a přechod Al / nerez', 'Např. výstupní kolektor z nerezu, přechodový kus Al–nerez.'),
+      ],
+    },
+    {
+      id: 'relief',
+      title: 'Ochrana proti přetlaku uzavřených úseků',
+      why:
+        'Kapalina nebo studený plyn uzavřený mezi armaturami se ohřívá a tlak roste nad PS – typicky v odstavené přepínané ' +
+        'větvi, za armaturou TSL po jejím zavření a v dohřevu.',
+      fields: [
+        field(
+          'relief.req',
+          'Pojistné ventily',
+          'tepelné pojistné ventily na každém úseku, kde může zůstat uzavřená kapalina (odstavená větev, úsek za armaturou TSL, dohřev); odvod z pojistných ventilů na bezpečné místo',
+          'PRAXE',
+          false,
+          { multiline: true },
+        ),
       ],
     },
     {
@@ -142,7 +188,7 @@ export function buildInquiry(ev: Evaluation, basis?: CatalogBasis): InquiryItem[
         'Kapacitu v Nm³/h výrobce garantuje jen za definovaných podmínek. Bez nich nejsou nabídky srovnatelné a katalogová ' +
         'kapacita se nedá přepočíst na lokalitu.',
       fields: [
-        field('guar.peak', 'Garantovaný průtok', flowPeak, 'VSTUP', true),
+        field('guar.peak', 'Garantovaný průtok (na jednu provozní větev)', flowPeak, 'VSTUP', true),
         field('guar.avg', 'Průměrný průtok', flowAvg, 'VSTUP', true),
         field('guar.tout', 'Výstupní teplota plynu na konci provozního cyklu', `≥ ${T(inp.T_out_C)}`, 'VSTUP', true),
         field(
@@ -163,6 +209,11 @@ export function buildInquiry(ev: Evaluation, basis?: CatalogBasis): InquiryItem[
           true,
         ),
         field('guar.start', 'Start', 'z odmraženého stavu; garance platí do konce provozního cyklu', 'PRAXE'),
+        cycle !== null
+          ? field('guar.cycle', 'Délka provozního cyklu', `${cycle} od startu z odmraženého stavu`, 'VSTUP', true)
+          : todo('guar.cycle', 'Délka provozního cyklu / interval přepnutí větví', 'Např. časovač 6 h; při 24/7 rozhoduje o garanci.'),
+        todo('guar.peaks', 'Trvání a četnost špiček', 'Např. 2 h špička 1× denně, jinak průměr.'),
+        field('guar.sentence', 'Garanční věta (souhrn)', guarantee, 'VSTUP', true, { multiline: true }),
         field(
           'guar.info',
           'Informativně z výpočtu',
@@ -191,6 +242,14 @@ export function buildInquiry(ev: Evaluation, basis?: CatalogBasis): InquiryItem[
         field('prot.scope', 'Rozsah', 'teplotní čidlo na výstupu + uzavírací armatura fail-close na přívodu kapaliny', 'PRAXE'),
         todo('prot.sil', 'Požadovaná úroveň SIL', 'Dle analýzy rizik (HAZOP / LOPA).'),
         field('prot.reset', 'Reset po vypnutí', 'ruční reset na místě', 'PRAXE'),
+        field(
+          'prot.req',
+          'Požadavky na TSL',
+          'nezávislé na řízení přepínání; uvést dobu odezvy čidla a dobu zavření armatury; bezpečný stav při ztrátě energie / vzduchu; interval periodických zkoušek celé smyčky; řízení přemostění (bypass)',
+          'PRAXE',
+          false,
+          { multiline: true },
+        ),
       ],
     },
     {
@@ -236,6 +295,29 @@ export function buildInquiry(ev: Evaluation, basis?: CatalogBasis): InquiryItem[
           true,
           { multiline: true },
         ),
+        ...(isO2
+          ? [
+              field(
+                'clean.valves',
+                'Armatury pro kyslík',
+                'materiály a konstrukce odolné vůči zapálení (adiabatická komprese u rychle otevíraných / přepínacích armatur), rychlosti proudění dle EIGA Doc 13',
+                'PRAXE',
+                false,
+                { multiline: true },
+              ),
+            ]
+          : []),
+      ],
+    },
+    {
+      id: 'install',
+      title: 'Odmrazování, zkoušky a stav při dodání',
+      why: 'Určuje provoz v zimě, přejímku a bezpečné uvedení do provozu.',
+      fields: [
+        todo('inst.defrost', 'Způsob odmrazování', 'Přirozeně / vodou / ohřátým plynem; postup s odstavením a zajištěním.'),
+        field('inst.tests', 'Zkoušky u výrobce', 'tlaková a těsnostní zkouška s protokolem', 'PRAXE'),
+        field('inst.delivery', 'Stav při dodání', 'vysušeno, uzavřeno a natlakováno suchým dusíkem', 'PRAXE'),
+        ...(isO2 ? [field('inst.ground', 'Podklad', 'bez asfaltu a hořlavých materiálů pod zařízením a v okolí (kapalný kyslík)', 'PRAXE')] : []),
       ],
     },
     {
