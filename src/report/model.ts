@@ -120,7 +120,7 @@ function inputsSection(ev: Evaluation, basis: CatalogBasis | undefined): ReportS
       ? txt('Očekávaná T_out bez dohřevu', 'nezadáno', 'VSTUP')
       : num('Očekávaná T_out bez dohřevu', i.T_actual_out_C, '°C', 'VSTUP', 1),
     txt('Katalogový základ', basis?.name ?? i.catalogBasisId, 'VYROBCE'),
-    num('Koeficient námrazy / rezervy k', i.k, '–', 'VSTUP', 2),
+    num('Koeficient námrazy / rezervy k (násobí N_eq)', i.k, '×', 'VSTUP', 2),
   );
   return { id: 'inputs', title: 'Vstupy', rows };
 }
@@ -192,8 +192,8 @@ function resultSections(ev: Evaluation, basis: CatalogBasis | undefined): Report
           txt('Katalogový základ', basis?.name ?? s.basisId, 'VYROBCE'),
           num('UA₁ (na 1 Nm³/h, katalogové podmínky)', s.ua1.UA1_W_K_per_Nm3h, 'W/K na Nm³/h', 'VYPOCET', 4),
           num('Ideální ekvivalent N_eq', s.N_eq_Nm3_h, `Nm³/h (${pol.catalogColumn}, kat. základ)`, 'VYPOCET', 1),
-          num('Koeficient k', s.k, '–', 'VSTUP', 2),
-          num('Tepelná náročnost N_eq·k/V̇n', s.thermalDemand, '–', 'VYPOCET', 3),
+          num('Koeficient k (násobí N_eq)', s.k, '×', 'VSTUP', 2),
+          num('Tepelná náročnost N_eq·k/V̇n', s.thermalDemand, '× průtoku', 'VYPOCET', 3),
           num('Nejmenší jmenovitá kapacita větve (dolní hranice, NE doporučený model)', s.minBranchCapacity_Nm3_h, 'Nm³/h', 'VYPOCET', 0),
         ],
         bullets: [...s.warnings],
@@ -228,7 +228,7 @@ function checksSection(ev: Evaluation): ReportSection {
     table: {
       head: ['Kontrola', 'Stav', 'Vysvětlení', 'Norma'],
       body: ev.checks.map((c) => [`${c.id} ${c.title}`, c.level, c.message, c.reference ?? '']),
-      widths: [2.6, 1.3, 6, 1.4],
+      widths: [2.6, 1.9, 6, 1.4],
     },
   };
 }

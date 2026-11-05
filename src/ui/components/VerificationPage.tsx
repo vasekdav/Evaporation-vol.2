@@ -57,12 +57,12 @@ export function VerificationPage() {
               <caption>{g}</caption>
               <thead>
                 <tr>
+                  <th scope="col">Stav</th>
                   <th scope="col">Látka</th>
                   <th scope="col">Případ</th>
                   <th scope="col">Reference</th>
                   <th scope="col">Aplikace</th>
                   <th scope="col">Odchylka / tolerance</th>
-                  <th scope="col">Stav</th>
                 </tr>
               </thead>
               <tbody>
@@ -70,6 +70,7 @@ export function VerificationPage() {
                   .filter((r) => r.group === g)
                   .map((r, i) => (
                     <tr key={`${r.fluid}-${r.name}-${i}`} className={r.pass ? 'pass' : 'fail'}>
+                      <td className="verdict">{r.pass ? '✓ OK' : '✗ CHYBA'}</td>
                       <td>{fluidLabel(r.fluid)}</td>
                       <td data-narrative="">{r.name}</td>
                       {r.type === 'num' ? (
@@ -91,7 +92,6 @@ export function VerificationPage() {
                           <td>–</td>
                         </>
                       )}
-                      <td className="verdict">{r.pass ? '✓ OK' : '✗ CHYBA'}</td>
                     </tr>
                   ))}
               </tbody>

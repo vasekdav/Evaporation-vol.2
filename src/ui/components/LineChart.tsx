@@ -193,10 +193,8 @@ export function LineChart({ title, src, xLabel, xUnit, yLabel, yUnit, series, ma
           ) : null}
         </svg>
         {hx !== undefined ? (
-          <div className="tooltip" style={{ left: `${tipLeftPct}%` }} role="status">
-            <div className="tt-x">
-              {xLabel} {fmt(hx, xDecimals)} {xUnit}
-            </div>
+          <div className="tooltip" style={{ left: `${tipLeftPct}%` }} aria-hidden="true">
+            <div className="tt-x">{`${xLabel} ${fmt(hx, xDecimals)} ${xUnit}`}</div>
             {series.map((s) => {
               const y = s.points[hover!]?.y;
               return (
@@ -204,7 +202,7 @@ export function LineChart({ title, src, xLabel, xUnit, yLabel, yUnit, series, ma
                   <svg width="14" height="6" aria-hidden="true">
                     <line x1="1" y1="3" x2="13" y2="3" className={`ln s${s.slot}`} />
                   </svg>
-                  <strong>{y === null || y === undefined ? 'nelze' : `${fmt(y, yDecimals)} ${yUnit}`}</strong>
+                  <strong>{y === null || y === undefined ? 'nelze' : `${fmt(y, yDecimals)} ${yUnit}`}</strong>{' '}
                   <span className="muted">{s.name}</span>
                 </div>
               );

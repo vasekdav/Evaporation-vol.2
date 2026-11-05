@@ -41,7 +41,7 @@ export function guideSteps(fluid: FluidId): GuideStep[] {
       inputs: 'Odběrová místa, záznamy spotřeby, plán výroby.',
       outputs: 'Špičkový a průměrný průtok v Nm³/h, profil provozu.',
       mistake: 'Dimenzovat na průměr nebo zapomenout na souběh špiček.',
-      link: { page: 'vypocet', label: 'Vstupy: potřeba' },
+      link: { page: 'vypocet', anchor: 'grp-need', label: 'Vstupy: potřeba' },
     },
     {
       n: '2',
@@ -53,7 +53,7 @@ export function guideSteps(fluid: FluidId): GuideStep[] {
       inputs: 'Data nádrže a potrubí, materiály, P&ID.',
       outputs: 'p, T_in, T_out, mez potrubí, TSL a rezerva.',
       mistake: 'Záměna přetlaku a absolutního tlaku; T_out blízko okolí bez úvahy o velikosti.',
-      link: { page: 'vypocet', label: 'Vstupy: proces a bezpečnost' },
+      link: { page: 'vypocet', anchor: 'grp-process', label: 'Vstupy: proces a bezpečnost' },
     },
     {
       n: '3',
@@ -65,6 +65,7 @@ export function guideSteps(fluid: FluidId): GuideStep[] {
       inputs: 'Klimatická data, umístění na pozemku.',
       outputs: 'T_min lokality, RH, týdny mrazu.',
       mistake: 'Použít výpočtovou teplotu pro vytápění jako absolutní minimum.',
+      link: { page: 'vypocet', anchor: 'grp-climate', label: 'Vstupy: klima lokality' },
     },
     {
       n: '4',

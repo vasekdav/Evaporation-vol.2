@@ -1290,3 +1290,165 @@ td {
   background: var(--info-bg);
   color: var(--info);
 }
+
+/* ================================================================ UX po nezávislé kontrole */
+/* dotykové cíle ≥ 44 px (tablet v provozu, rukavice) */
+.num-input input,
+select,
+.segmented button,
+.btn,
+.tabs button,
+.text-input {
+  min-height: 44px;
+}
+.help-btn {
+  width: 44px;
+  height: 44px;
+  font-size: 1.05rem;
+}
+.check {
+  min-height: 44px;
+  padding: 0 6px;
+}
+.check input {
+  width: 24px;
+  height: 24px;
+}
+.link-btn {
+  min-height: 44px;
+  padding: 8px 6px;
+}
+.table-view summary,
+.rules summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.summary-bar a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 6px;
+}
+/* čitelnější štítky původu */
+.src,
+.src-DOPLNIT {
+  font-size: 0.74rem;
+  padding: 1px 5px;
+}
+/* chyby a upozornění přímo u pole */
+.field-warn .num-input {
+  border-color: var(--warn);
+}
+.field-error .num-input,
+.num-input:has(input[aria-invalid='true']) {
+  border-color: var(--err);
+  border-width: 2px;
+}
+.field-issues {
+  margin: 4px 0 0;
+  padding: 0 0 0 18px;
+  font-size: 0.82rem;
+}
+.field-issues .err {
+  color: var(--err);
+}
+.field-issues .warn {
+  color: var(--warn);
+}
+/* důvody stavu a obsah stránky */
+.status-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.status-reasons a,
+.summary-reasons a {
+  color: inherit;
+}
+.summary-reasons {
+  display: inline-flex;
+  gap: 2px;
+}
+.section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+.section-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.88rem;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.check-row:focus,
+.group:focus,
+.page:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* záložky: náznak přetečení na úzké obrazovce */
+@media (max-width: 860px) {
+  .tabs {
+    mask-image: linear-gradient(to right, #000 88%, transparent);
+    -webkit-mask-image: linear-gradient(to right, #000 88%, transparent);
+  }
+}
+/* postup návrhu: stav kroků, typická chyba bez celočervené */
+.step-state {
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.step-state.st-ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+.step-state.st-warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.step-state.st-todo {
+  background: var(--na-bg);
+  color: var(--na);
+}
+.guide-dl .mistake {
+  color: var(--text);
+}
+.mistake-label {
+  color: var(--err);
+  font-weight: 600;
+}
+/* grafy: větší písmo v SVG (viewBox se zmenšuje) */
+.chart .tick,
+.chart .axis-title,
+.chart .direct-label {
+  font-size: 14px;
+}
+.status-reasons a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}

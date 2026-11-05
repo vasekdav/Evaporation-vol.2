@@ -7,7 +7,9 @@ import { ConceptPanel } from './components/ConceptPanel';
 import { ExportBar } from './components/ExportBar';
 import { InputPanel } from './components/InputPanel';
 import { Qty } from './components/Qty';
-import { ChecksPanel, ResultCard, SourceLegend, StatusBanner } from './components/results';
+import { ChecksPanel, ResultCard, SectionNav, SourceLegend, StatusBanner, statusReasons } from './components/results';
+import type { FieldIssue } from './components/fields';
+import type { InputField } from '../core/checks';
 import { SensitivityPanel } from './components/SensitivityPanel';
 import { SizingPanel } from './components/SizingPanel';
 import { StepByStep } from './components/StepByStep';
@@ -23,8 +25,8 @@ export const APP_VERSION = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__
 
 const PAGES: readonly { id: PageId; label: string }[] = [
   { id: 'vypocet', label: 'Výpočet a návrh' },
-  { id: 'poptavka', label: 'Poptávka' },
   { id: 'postup', label: 'Postup návrhu' },
+  { id: 'poptavka', label: 'Poptávka' },
   { id: 'proc-ne-kw', label: 'Proč ne kW' },
   { id: 'rovnice', label: 'Rovnice' },
   { id: 'overeni', label: 'Ověření' },
@@ -54,24 +56,38 @@ export function App({ initialCase }: AppProps = {}) {
   const [scrollTo, setScrollTo] = useState<string | null>(null);
 
   useEffect(() => {
-    const on = () => setPage(pageFromHash());
+    // Zpět / Vpřed v prohlížeči (gesto na tabletu) přepíná stránky aplikace
+    const on = () => {
+      const h = window.location.hash.replace('#', '');
+      if (!h || PAGES.some((p) => p.id === h)) setPage(pageFromHash());
+    };
     window.addEventListener('hashchange', on);
-    return () => window.removeEventListener('hashchange', on);
+    window.addEventListener('popstate', on);
+    return () => {
+      window.removeEventListener('hashchange', on);
+      window.removeEventListener('popstate', on);
+    };
   }, []);
   useEffect(() => {
-    if (!scrollTo) return;
-    document.getElementById(scrollTo)?.scrollIntoView?.({ block: 'start' });
+    if (scrollTo === null) return;
+    // po navigaci přesunout fokus na cíl (nadpis stránky nebo sekci), aby klávesnice i čtečka věděly, kde jsou
+    const el = document.getElementById(scrollTo);
+    el?.scrollIntoView?.({ block: 'start' });
+    el?.focus?.({ preventScroll: true });
     setScrollTo(null);
   }, [scrollTo, page]);
 
   const go = (p: PageId, anchor?: string) => {
-    setPage(p);
-    setScrollTo(anchor ?? null);
-    try {
-      window.history.replaceState(null, '', p === 'vypocet' ? window.location.pathname + window.location.search : `#${p}`);
-    } catch {
-      /* bez historie (např. file://) – nevadí */
+    if (p !== page) {
+      try {
+        const url = p === 'vypocet' ? window.location.pathname + window.location.search : `#${p}`;
+        window.history.pushState(null, '', url);
+      } catch {
+        /* bez historie (např. file://) – nevadí */
+      }
     }
+    setPage(p);
+    setScrollTo(anchor ?? 'page-top');
     if (!anchor) document.documentElement.scrollTop = 0;
   };
 
@@ -86,6 +102,17 @@ export function App({ initialCase }: AppProps = {}) {
     setInquiry(c.inquiry);
   };
   const exportProps = { ev, input, basis, customBases, inquiry, appVersion: APP_VERSION, onLoadCase: loadCase };
+  // nálezy kontrol přiřazené k polím vstupů (chyba se ukáže přímo u pole)
+  const issues = useMemo(() => {
+    const out: Partial<Record<InputField, FieldIssue[]>> = {};
+    for (const c of ev.checks) {
+      if ((c.level !== 'CHYBA' && c.level !== 'POZOR') || !c.fields) continue;
+      const lvl = c.level;
+      const text = c.id === 'K1' ? 'Neplatná nebo chybějící hodnota (K1).' : `${c.id}: ${c.message}`;
+      for (const f of c.fields) (out[f] ??= []).push({ level: lvl, text });
+    }
+    return out;
+  }, [ev.checks]);
 
   return (
     <div className="app">
@@ -125,6 +152,15 @@ export function App({ initialCase }: AppProps = {}) {
           {/* úzká obrazovka (tablet na výšku): výsledek stále na očích, i když jsou vstupy nahoře */}
           <div className={`summary-bar ${ev.duty ? '' : 'summary-invalid'}`} role="region" aria-label="Souhrn výsledku">
             <span className="summary-status">{ev.statusText}</span>
+            {statusReasons(ev).length ? (
+              <span className="summary-reasons" data-narrative="">
+                {statusReasons(ev).map((c) => (
+                  <a key={c.id} href={`#chk-${c.id}`}>
+                    {c.id}
+                  </a>
+                ))}
+              </span>
+            ) : null}
             {ev.duty ? (
               <span>
                 Q = <Qty v={ev.duty.Q_kW} unit="kW" src="VYPOCET" />
@@ -140,10 +176,15 @@ export function App({ initialCase }: AppProps = {}) {
                 onReset={reset}
                 customBases={customBases}
                 onCustomBasesChange={setCustomBases}
+                issues={issues}
               />
             </aside>
             <main className="results" data-results="">
+              <h2 id="page-top" className="sr-only" tabIndex={-1}>
+                Výsledky výpočtu
+              </h2>
               <StatusBanner ev={ev} />
+              <SectionNav />
               <ExportBar {...exportProps} />
               <SourceLegend />
               <ResultCard ev={ev} />
@@ -156,7 +197,7 @@ export function App({ initialCase }: AppProps = {}) {
           </div>
         </>
       ) : (
-        <div className="page">
+        <div className="page" id="page-top" tabIndex={-1}>
           {page === 'poptavka' ? (
             <InquiryPage
               ev={ev}
@@ -166,7 +207,7 @@ export function App({ initialCase }: AppProps = {}) {
               toolbar={<ExportBar {...exportProps} variant="inquiry" />}
             />
           ) : null}
-          {page === 'postup' ? <GuidePage fluid={input.fluid} go={go} /> : null}
+          {page === 'postup' ? <GuidePage fluid={input.fluid} go={go} ev={ev} inquiry={inquiry} basis={basis} /> : null}
           {page === 'proc-ne-kw' ? <LearnPage ev={ev} basis={basis} /> : null}
           {page === 'rovnice' ? <EquationsPage /> : null}
           {page === 'overeni' ? <VerificationPage /> : null}

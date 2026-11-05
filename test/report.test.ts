@@ -68,7 +68,7 @@ describe('generátor poptávky', () => {
     for (const it of items) expect(it.why.length).toBeGreaterThan(20);
     const f = (k: string) => items.flatMap((i) => i.fields).find((x) => x.key === k)!;
     expect(f('guar.peak').prefill).toBe('1 000 Nm³/h (špička)'.replace(' ', ' '));
-    expect(f('guar.tout').prefill).toContain('-30 °C');
+    expect(f('guar.tout').prefill).toContain('−30 °C'); // typografické minus
     expect(f('source.pressure').prefill).toContain('5,00 barg');
     expect(f('clean.req').prefill).toContain('EIGA Doc 33');
     expect(f('ped.group').prefill).toContain('skupina 1');
@@ -252,7 +252,7 @@ describe('poptávka – doplňky z nezávislé kontroly', () => {
   it('N₂ při −209 °C: TS min = teplota kapaliny (ne pevných −196 °C)', () => {
     const ev = evaluate({ ...defaultInput('N2'), liquid: { kind: 'subcooled', T_C: -205 } });
     const ts = buildInquiry(ev, chart).flatMap((i) => i.fields).find((f) => f.key === 'ped.ts')!;
-    expect(ts.prefill).toContain('-205 °C'.replace('-', fmtMinus()));
+    expect(ts.prefill).toContain('−205 °C');
   });
   it('24/7 → délka cyklu k doplnění, 2 × 100 % přepínané větve', () => {
     const ev = evaluate({ ...defaultInput('N2'), continuous24_7: true });
@@ -267,8 +267,3 @@ describe('poptávka – doplňky z nezávislé kontroly', () => {
     expect(w).toContain('nenahrazují HAZOP / LOPA');
   });
 });
-
-/** Znaménko minus, jak ho vrací formátovač (mění se v dávce UX). */
-function fmtMinus(): string {
-  return new Intl.NumberFormat('cs-CZ').format(-1).replace('1', '');
-}

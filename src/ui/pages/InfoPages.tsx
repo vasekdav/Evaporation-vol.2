@@ -1,10 +1,49 @@
 /** Stránky: Postup návrhu (10 kroků), Rovnice a předpoklady, Zdroje. */
-import type { FluidId } from '../../core/properties/types';
+import type { CatalogBasis } from '../../core/catalog';
+import type { Evaluation } from '../../core/evaluate';
 import { FLUID_POLICY } from '../../core/fluids';
+import { buildInquiry, checkInquiry, missingInquiryFields } from '../../core/inquiry';
+import type { FluidId } from '../../core/properties/types';
 import { guideSteps, type PageId } from '../content/guide';
 
-export function GuidePage({ fluid, go }: { fluid: FluidId; go: (p: PageId, anchor?: string) => void }) {
+type StepState = { kind: 'ok' | 'warn' | 'todo'; text: string } | null;
+
+/** Stav kroků 1–6 odvozený z aktuálního případu (ostatní kroky jsou mimo aplikaci). */
+function stepStates(ev: Evaluation, inquiry: Record<string, string>, basis: CatalogBasis | undefined): Record<string, StepState> {
+  const lv = (id: string) => ev.checks.find((c) => c.id === id)?.level;
+  const anyBad = (ids: string[]) => ids.some((id) => lv(id) === 'CHYBA');
+  const anyWarn = (ids: string[]) => ids.some((id) => lv(id) === 'POZOR');
+  const items = buildInquiry(ev, basis);
+  const mism = checkInquiry(items, inquiry).length;
+  const missing = missingInquiryFields(items, inquiry).length;
+  const ok = (text: string): StepState => ({ kind: 'ok', text });
+  const warn = (text: string): StepState => ({ kind: 'warn', text });
+  const todo = (text: string): StepState => ({ kind: 'todo', text });
+  return {
+    '1': lv('K1') === 'CHYBA' ? warn('zkontroluj vstupy (K1)') : ev.input.avgFlow ? ok('zadáno') : todo('chybí průměrný průtok (pro poptávku)'),
+    '2': anyBad(['K2', 'K3', 'K4', 'K5', 'K6', 'K8']) ? warn('CHYBA v kontrolách') : anyWarn(['K4', 'K6', 'K8']) ? warn('viz POZOR') : ev.input.TSL_C === null ? todo('chybí TSL') : ok('v pořádku'),
+    '3': ev.input.T_min_site_C === null ? todo('chybí min. teplota lokality') : ev.input.frostWeeks === null ? todo('chybí délka mrazového období') : ok('zadáno'),
+    '4': ev.duty ? (ev.status === 'ALL_OK' ? ok(ev.statusText) : warn(ev.statusText)) : warn('výkon nelze spočítat'),
+    '5': ev.concept && ev.sizing?.ok ? ok('koncept a dolní mez k dispozici') : ev.concept ? warn('posouzení velikosti nelze') : warn('nejdřív oprav vstupy'),
+    '6': mism ? warn(`poptávka se liší od vstupů v ${mism} polích`) : missing ? todo(`k doplnění ${missing} polí`) : ok('vyplněno'),
+  };
+}
+
+export function GuidePage({
+  fluid,
+  go,
+  ev,
+  inquiry,
+  basis,
+}: {
+  fluid: FluidId;
+  go: (p: PageId, anchor?: string) => void;
+  ev?: Evaluation;
+  inquiry?: Record<string, string>;
+  basis?: CatalogBasis;
+}) {
   const steps = guideSteps(fluid);
+  const states = ev ? stepStates(ev, inquiry ?? {}, basis) : {};
   return (
     <div className="info-page">
       <section className="card">
@@ -19,6 +58,11 @@ export function GuidePage({ fluid, go }: { fluid: FluidId; go: (p: PageId, ancho
           <li key={s.n} className="card guide-step">
             <h3>
               <span className="step-no">{s.n}</span> {s.title}
+              {states[s.n] ? (
+                <span className={`step-state st-${states[s.n]!.kind}`} data-testid={`step-state-${s.n}`}>
+                  {states[s.n]!.kind === 'ok' ? '✓' : states[s.n]!.kind === 'warn' ? '!' : '…'} {states[s.n]!.text}
+                </span>
+              ) : null}
             </h3>
             <ul>
               {s.todo.map((t) => (
@@ -31,7 +75,10 @@ export function GuidePage({ fluid, go }: { fluid: FluidId; go: (p: PageId, ancho
               <dt>Výstupy</dt>
               <dd>{s.outputs}</dd>
               <dt>Typická chyba</dt>
-              <dd className="mistake">{s.mistake}</dd>
+              <dd className="mistake">
+                <span className="mistake-label">pozor: </span>
+                {s.mistake}
+              </dd>
             </dl>
             {s.link ? (
               <button type="button" className="link-btn" onClick={() => go(s.link!.page, s.link!.anchor)}>

@@ -12,11 +12,51 @@ const STATUS_CLASS: Record<Evaluation['status'], string> = {
   INVALID: 'st-invalid',
 };
 
+/** Kontroly, které určují stav (CHYBA, POZOR, nezadané údaje) – pro odkazy ve stavovém pruhu. */
+export function statusReasons(ev: Evaluation): CheckResult[] {
+  return ev.checks.filter((c) => c.level === 'CHYBA' || c.level === 'POZOR' || (c.id === 'D1' && c.level === 'NEZADÁNO'));
+}
+
 export function StatusBanner({ ev }: { ev: Evaluation }) {
+  const reasons = statusReasons(ev);
   return (
-    <div className={`status ${STATUS_CLASS[ev.status]}`} role="status" aria-live="polite" data-testid="status">
-      {ev.statusText}
+    <div className={`status ${STATUS_CLASS[ev.status]}`}>
+      <div role="status" aria-live="polite" data-testid="status">
+        {ev.statusText}
+      </div>
+      {reasons.length ? (
+        <ul className="status-reasons" aria-label="Důvody stavu" data-narrative="">
+          {reasons.map((c) => (
+            <li key={c.id}>
+              <a href={`#chk-${c.id}`}>
+                {c.id} {c.title} – {c.level}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
+  );
+}
+
+/** Obsah stránky výsledků – rychlý skok na sekci (dlouhá stránka na tabletu). */
+export function SectionNav() {
+  const items: [string, string][] = [
+    ['res-h', 'Výsledek'],
+    ['chk-h', 'Kontroly'],
+    ['size-h', 'Velikost'],
+    ['concept-h', 'Koncept'],
+    ['sens-h', 'Citlivost'],
+    ['steps-h', 'Postup výpočtu'],
+  ];
+  return (
+    <nav className="section-nav" aria-label="Obsah stránky">
+      {items.map(([id, label]) => (
+        <a key={id} href={`#${id}`}>
+          {label}
+        </a>
+      ))}
+    </nav>
   );
 }
 
@@ -139,7 +179,7 @@ const LEVEL_CLASS: Record<CheckLevel, string> = {
 
 function CheckRow({ c }: { c: CheckResult }) {
   return (
-    <li className={`check-row ${LEVEL_CLASS[c.level]}`} data-check={c.id} data-level={c.level}>
+    <li className={`check-row ${LEVEL_CLASS[c.level]}`} data-check={c.id} data-level={c.level} id={`chk-${c.id}`} tabIndex={-1}>
       <span className="light" aria-hidden="true" />
       <span className="check-id" data-narrative="">
         {c.id}

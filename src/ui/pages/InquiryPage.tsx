@@ -47,11 +47,29 @@ function FieldEditor({
           </button>
         ) : null}
       </div>
-      {f.multiline ? (
-        <textarea id={id} className="text-input" rows={3} value={value} placeholder={f.hint} onChange={(e) => onChange(e.target.value)} />
+      {f.multiline || value.length > 60 || f.prefill.length > 60 ? (
+        <textarea
+          id={id}
+          className="text-input"
+          rows={Math.min(6, Math.max(2, Math.ceil(Math.max(value.length, f.prefill.length) / 70)))}
+          value={value}
+          aria-describedby={f.hint ? `${id}-hint` : undefined}
+          onChange={(e) => onChange(e.target.value)}
+        />
       ) : (
-        <input id={id} className="text-input" value={value} placeholder={f.hint} onChange={(e) => onChange(e.target.value)} />
+        <input
+          id={id}
+          className="text-input"
+          value={value}
+          aria-describedby={f.hint ? `${id}-hint` : undefined}
+          onChange={(e) => onChange(e.target.value)}
+        />
       )}
+      {f.hint ? (
+        <div className="hint" id={`${id}-hint`}>
+          {f.hint}
+        </div>
+      ) : null}
     </div>
   );
 }

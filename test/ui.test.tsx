@@ -146,7 +146,7 @@ describe('interakce', () => {
 
   it('postup výpočtu ukazuje mezihodnoty (T_sat −161,66 °C)', () => {
     render(<App />);
-    expect(within(results()).getAllByText('-161,661').length).toBeGreaterThan(0);
+    expect(within(results()).getAllByText('−161,661').length).toBeGreaterThan(0);
   });
 });
 

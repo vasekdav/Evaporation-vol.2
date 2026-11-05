@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { FieldText } from '../texts';
 
 /** Čte číslo v CZ i EN zápisu: „−5,5“, „-5.5“, „1 000“. Prázdné → null, nečitelné → NaN. */
@@ -15,20 +15,28 @@ export function formatEditable(v: number | null): string {
   return String(Number(v.toPrecision(10))).replace('.', ',');
 }
 
+export interface FieldIssue {
+  level: 'CHYBA' | 'POZOR';
+  text: string;
+}
+
 interface FieldProps {
   text: FieldText;
   children: ReactNode;
   hint?: ReactNode;
-  error?: string | null;
+  /** nálezy kontrol vztažené k tomuto poli */
+  issues?: readonly FieldIssue[];
   htmlFor?: string;
+  id?: string;
 }
 
 /** Pole formuláře s popiskem a rozbalovací nápovědou „proč na tom záleží“ (funguje i dotykem). */
-export function Field({ text, children, hint, error, htmlFor }: FieldProps) {
+export function Field({ text, children, hint, issues = [], htmlFor, id }: FieldProps) {
   const [open, setOpen] = useState(false);
   const helpId = useId();
+  const hasErr = issues.some((i) => i.level === 'CHYBA');
   return (
-    <div className={`field${error ? ' field-error' : ''}`}>
+    <div id={id} className={`field${hasErr ? ' field-error' : issues.length ? ' field-warn' : ''}`}>
       <div className="field-head">
         <label htmlFor={htmlFor}>{text.label}</label>
         <button
@@ -44,10 +52,14 @@ export function Field({ text, children, hint, error, htmlFor }: FieldProps) {
       </div>
       {children}
       {hint ? <div className="hint" data-narrative="">{hint}</div> : null}
-      {error ? (
-        <div className="hint err" role="alert">
-          {error}
-        </div>
+      {issues.length ? (
+        <ul className="field-issues" id={htmlFor ? `${htmlFor}-issues` : undefined} data-narrative="">
+          {issues.map((i) => (
+            <li key={i.text} className={i.level === 'CHYBA' ? 'err' : 'warn'}>
+              {i.text}
+            </li>
+          ))}
+        </ul>
       ) : null}
       {open ? (
         <div id={helpId} className="help" data-narrative="">
@@ -69,10 +81,12 @@ interface NumberInputProps {
   placeholder?: string;
   disabled?: boolean;
   ariaLabel?: string;
+  /** nález kontroly vztažený k poli (zvýrazní pole) */
+  flagged?: boolean;
 }
 
 /** Číselné pole s jednotkou. Drží vlastní text, aby šlo psát „-“ nebo „5,“ bez přepisování. */
-export function NumberInput({ id, value, onChange, unit, optional, placeholder, disabled, ariaLabel }: NumberInputProps) {
+export function NumberInput({ id, value, onChange, unit, optional, placeholder, disabled, ariaLabel, flagged }: NumberInputProps) {
   const [text, setText] = useState(formatEditable(value));
   useEffect(() => {
     const parsed = parseNumber(text);
@@ -80,8 +94,11 @@ export function NumberInput({ id, value, onChange, unit, optional, placeholder, 
     if (!same) setText(formatEditable(value));
   }, [value]);
   const parsed = parseNumber(text);
-  const invalid = (parsed === null && !optional) || (parsed !== null && Number.isNaN(parsed));
+  const unreadable = parsed !== null && Number.isNaN(parsed);
+  const invalid = (parsed === null && !optional) || unreadable || !!flagged;
+  const hintId = id ? `${id}-num` : undefined;
   return (
+    <>
     <div className="num-input">
       <input
         id={id}
@@ -93,6 +110,7 @@ export function NumberInput({ id, value, onChange, unit, optional, placeholder, 
         disabled={disabled}
         aria-invalid={invalid}
         aria-label={ariaLabel}
+        aria-describedby={id ? [unreadable || (parsed === null && !optional) ? hintId : null, `${id}-issues`].filter(Boolean).join(' ') : undefined}
         onChange={(e) => {
           setText(e.target.value);
           const p = parseNumber(e.target.value);
@@ -101,6 +119,12 @@ export function NumberInput({ id, value, onChange, unit, optional, placeholder, 
       />
       <span className="unit">{unit}</span>
     </div>
+    {unreadable || (parsed === null && !optional) ? (
+      <div className="hint err" id={hintId} data-narrative="">
+        {unreadable ? 'Zadej číslo, např. 1 000 nebo 1,5 (záporné −30).' : 'Pole je povinné.'}
+      </div>
+    ) : null}
+    </>
   );
 }
 
@@ -111,15 +135,28 @@ interface SegmentedProps<T extends string> {
   ariaLabel: string;
 }
 
+/** Přepínač (radiogroup) s klávesnicí: jedna zarážka tabulátoru, šipky mění volbu. */
 export function Segmented<T extends string>({ value, options, onChange, ariaLabel }: SegmentedProps<T>) {
+  const ref = useRef<HTMLDivElement>(null);
+  const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    const dir = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+    if (!dir) return;
+    e.preventDefault();
+    const i = options.findIndex((o) => o.value === value);
+    const next = options[(i + dir + options.length) % options.length]!;
+    onChange(next.value);
+    const btns = ref.current?.querySelectorAll<HTMLButtonElement>('button');
+    btns?.[options.indexOf(next)]?.focus();
+  };
   return (
-    <div className="segmented" role="radiogroup" aria-label={ariaLabel}>
+    <div className="segmented" role="radiogroup" aria-label={ariaLabel} ref={ref} onKeyDown={onKey}>
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           role="radio"
           aria-checked={o.value === value}
+          tabIndex={o.value === value ? 0 : -1}
           className={o.value === value ? 'on' : ''}
           onClick={() => onChange(o.value)}
         >

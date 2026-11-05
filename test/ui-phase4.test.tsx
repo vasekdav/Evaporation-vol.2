@@ -33,8 +33,8 @@ describe('navigace', () => {
     const nav = screen.getByRole('navigation', { name: 'Stránky' });
     expect(within(nav).getAllByRole('button').map((b) => b.textContent)).toEqual([
       'Výpočet a návrh',
-      'Poptávka',
       'Postup návrhu',
+      'Poptávka',
       'Proč ne kW',
       'Rovnice',
       'Ověření',

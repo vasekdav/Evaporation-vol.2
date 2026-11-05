@@ -22,8 +22,18 @@ export function pdfText(t: string): string {
   return t.replace(/ṁ/g, 'm').replace(/\u0307/g, '');
 }
 
+const LEVEL_COLOR: Record<string, string> = {
+  OK: '#1e7a3c',
+  INFO: '#1f5fa8',
+  NEZADÁNO: '#59636e',
+  NEHODNOCENO: '#59636e',
+  POZOR: '#9a6200',
+  CHYBA: '#b42318',
+};
+
 function section(s: ReportSection): Content[] {
-  const out: Content[] = [{ text: pdfText(s.title), style: 'h2' }];
+  // headlineLevel: nadpis se nesmí ocitnout sám na konci strany (viz pageBreakBefore)
+  const out: Content[] = [{ text: pdfText(s.title), style: 'h2', headlineLevel: 1 } as Content];
   for (const p of s.paragraphs ?? []) out.push({ text: pdfText(p), style: 'p' });
   if (s.rows?.length) {
     out.push({
@@ -55,7 +65,12 @@ function section(s: ReportSection): Content[] {
       table: {
         headerRows: 1,
         widths: w ? w.map((x) => `${(x / w.reduce((a, b) => a + b, 0)) * 100}%`) : s.table.head.map(() => '*'),
-        body: [s.table.head.map((h) => ({ text: pdfText(h), style: 'th' })), ...s.table.body.map((r) => r.map((c) => ({ text: pdfText(c) })))],
+        body: [
+          s.table.head.map((h) => ({ text: pdfText(h), style: 'th' })),
+          ...s.table.body.map((r) =>
+            r.map((c) => (LEVEL_COLOR[c] ? { text: c, color: LEVEL_COLOR[c], bold: true } : { text: pdfText(c) })),
+          ),
+        ],
       },
       layout: 'lightHorizontalLines',
       style: 'table',
@@ -71,6 +86,12 @@ export function buildPdfDefinition(m: ReportModel): TDocumentDefinitions {
     info: { title: m.title, creator: `Odpařovač ${m.appVersion}`, subject: m.subtitle },
     pageSize: 'A4',
     pageMargins: [40, 50, 40, 50],
+    pageBreakBefore: (node, q) => {
+      if ((node as { headlineLevel?: number }).headlineLevel !== 1) return false;
+      // pdfmake 0.3 předává dotazy jako objekt, starší verze pole uzlů
+      const following = typeof q?.getFollowingNodesOnPage === 'function' ? q.getFollowingNodesOnPage() : (q as unknown as unknown[]);
+      return Array.isArray(following) && following.length < 2;
+    },
     defaultStyle: { font: 'Roboto', fontSize: 8.5, lineHeight: 1.15 },
     header: (page: number, count: number) => ({
       columns: [
