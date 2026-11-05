@@ -1,9 +1,12 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { FieldText } from '../texts';
+import { getLang, tr } from '../../core/i18n';
 
 /** Čte číslo v CZ i EN zápisu: „−5,5“, „-5.5“, „1 000“. Prázdné → null, nečitelné → NaN. */
 export function parseNumber(text: string): number | null {
-  const t = text.replace(/[\s  ]/g, '').replace(/−/g, '-').replace(',', '.');
+  let t = text.replace(/[\s  ]/g, '').replace(/−/g, '-');
+  // „1,000.5“ (EN s oddělovačem tisíců) → čárky pryč; jinak je čárka desetinná
+  t = t.includes('.') && t.includes(',') ? t.replace(/,/g, '') : t.replace(',', '.');
   if (t === '') return null;
   if (!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(t)) return Number.NaN;
   return Number(t);
@@ -12,7 +15,8 @@ export function parseNumber(text: string): number | null {
 /** Hodnota do editačního pole: desetinná čárka, bez oddělovače tisíců, bez šumu plovoucí čárky. */
 export function formatEditable(v: number | null): string {
   if (v === null || Number.isNaN(v)) return '';
-  return String(Number(v.toPrecision(10))).replace('.', ',');
+  const s = String(Number(v.toPrecision(10)));
+  return getLang() === 'cs' ? s.replace('.', ',') : s;
 }
 
 export interface FieldIssue {
@@ -44,7 +48,7 @@ export function Field({ text, children, hint, issues = [], htmlFor, id }: FieldP
           className="help-btn"
           aria-expanded={open}
           aria-controls={helpId}
-          aria-label={`Proč na tom záleží: ${text.label}`}
+          aria-label={`${tr('Proč na tom záleží', 'Why it matters')}: ${text.label}`}
           onClick={() => setOpen((o) => !o)}
         >
           ?
@@ -63,7 +67,7 @@ export function Field({ text, children, hint, issues = [], htmlFor, id }: FieldP
       ) : null}
       {open ? (
         <div id={helpId} className="help" data-narrative="">
-          <strong>Proč na tom záleží: </strong>
+          <strong>{tr('Proč na tom záleží', 'Why it matters')}: </strong>
           {text.help}
         </div>
       ) : null}
@@ -106,7 +110,7 @@ export function NumberInput({ id, value, onChange, unit, optional, placeholder, 
         inputMode="decimal"
         autoComplete="off"
         value={text}
-        placeholder={placeholder ?? (optional ? 'nezadáno' : '')}
+        placeholder={placeholder ?? (optional ? tr('nezadáno', 'not set') : '')}
         disabled={disabled}
         aria-invalid={invalid}
         aria-label={ariaLabel}
@@ -121,7 +125,9 @@ export function NumberInput({ id, value, onChange, unit, optional, placeholder, 
     </div>
     {unreadable || (parsed === null && !optional) ? (
       <div className="hint err" id={hintId} data-narrative="">
-        {unreadable ? 'Zadej číslo, např. 1 000 nebo 1,5 (záporné −30).' : 'Pole je povinné.'}
+        {unreadable
+          ? tr('Zadej číslo, např. 1 000 nebo 1,5 (záporné −30).', 'Enter a number, e.g. 1000 or 1.5 (negative −30).')
+          : tr('Pole je povinné.', 'This field is required.')}
       </div>
     ) : null}
     </>

@@ -1,3 +1,5 @@
+import { tr } from '../core/i18n';
+
 /** Stažení souboru v prohlížeči. */
 export function downloadBlob(data: BlobPart, fileName: string, mime: string): void {
   const blob = new Blob([data], { type: mime });
@@ -23,7 +25,7 @@ export function readFileText(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(String(r.result ?? ''));
-    r.onerror = () => reject(r.error ?? new Error('Soubor nelze přečíst.'));
+    r.onerror = () => reject(r.error ?? new Error(tr('Soubor nelze přečíst.', 'The file cannot be read.')));
     r.readAsText(file, 'utf-8');
   });
 }

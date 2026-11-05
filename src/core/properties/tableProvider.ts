@@ -9,6 +9,7 @@
  *   h_l(p,T) = h_l,sat(T) + (∂h/∂p)_T·(p − p_sat(T)).
  */
 import { fmt } from '../format';
+import { tr } from '../i18n';
 import { bracket, interp1, interp2, lerpAt } from './interp';
 import {
   PropertyRangeError,
@@ -62,7 +63,7 @@ export class TableProvider implements PropertyProvider {
     if (!(p_bar_a >= lo - 1e-9 && p_bar_a <= hi + 1e-9)) {
       throw new PropertyRangeError(
         'P_OUT_OF_RANGE',
-        `Tlak ${fmt(p_bar_a, 3)} bar a je mimo rozsah dat pro ${fluid} (${fmt(lo, 0)}–${fmt(hi, 0)} bar a).`,
+        tr(`Tlak ${fmt(p_bar_a, 3)} bar a je mimo rozsah dat pro ${fluid} (${fmt(lo, 0)}–${fmt(hi, 0)} bar a).`, `Pressure ${fmt(p_bar_a, 3)} bar a is outside the data range for ${fluid} (${fmt(lo, 0)}–${fmt(hi, 0)} bar a).`),
         { p_bar_a, p_min_bar_a: lo, p_max_bar_a: hi },
       );
     }
@@ -96,7 +97,7 @@ export class TableProvider implements PropertyProvider {
     if (h === null) {
       throw new PropertyRangeError(
         'T_GAS_OUT_OF_RANGE',
-        `Teplota plynu ${fmt(T_C, 2)} °C je mimo rozsah tabulky (${fmt(this.meta.T_gas_min_C, 0)} až +${fmt(this.meta.T_gas_max_C, 0)} °C).`,
+        tr(`Teplota plynu ${fmt(T_C, 2)} °C je mimo rozsah tabulky (${fmt(this.meta.T_gas_min_C, 0)} až +${fmt(this.meta.T_gas_max_C, 0)} °C).`, `Gas temperature ${fmt(T_C, 2)} °C is outside the table range (${fmt(this.meta.T_gas_min_C, 0)} to +${fmt(this.meta.T_gas_max_C, 0)} °C).`),
         { T_C, T_min_C: this.meta.T_gas_min_C, T_max_C: this.meta.T_gas_max_C },
       );
     }
@@ -115,8 +116,10 @@ export class TableProvider implements PropertyProvider {
     if (T_C < this.meta.T_liq_min_C - 1e-9) {
       throw new PropertyRangeError(
         'T_LIQ_BELOW_TABLE',
-        `Teplota kapaliny ${fmt(T_C, 2)} °C je pod dolní mezí tabulky ${fmt(this.meta.T_liq_min_C, 0)} °C ` +
-          `(trojný bod ${fmt(this.meta.T_triple_C, 2)} °C).`,
+        tr(
+          `Teplota kapaliny ${fmt(T_C, 2)} °C je pod dolní mezí tabulky ${fmt(this.meta.T_liq_min_C, 0)} °C (trojný bod ${fmt(this.meta.T_triple_C, 2)} °C).`,
+          `Liquid temperature ${fmt(T_C, 2)} °C is below the table limit ${fmt(this.meta.T_liq_min_C, 0)} °C (triple point ${fmt(this.meta.T_triple_C, 2)} °C).`,
+        ),
         { T_C, T_min_C: this.meta.T_liq_min_C },
       );
     }
@@ -124,7 +127,7 @@ export class TableProvider implements PropertyProvider {
     if (T_C > sat.T_sat_C + SAT_T_TOL_K) {
       throw new PropertyRangeError(
         'T_LIQ_ABOVE_SAT',
-        `Teplota kapaliny ${fmt(T_C, 2)} °C je nad teplotou nasycení ${fmt(sat.T_sat_C, 2)} °C při ${fmt(p_bar_a, 3)} bar a.`,
+        tr(`Teplota kapaliny ${fmt(T_C, 2)} °C je nad teplotou nasycení ${fmt(sat.T_sat_C, 2)} °C při ${fmt(p_bar_a, 3)} bar a.`, `Liquid temperature ${fmt(T_C, 2)} °C is above the saturation temperature ${fmt(sat.T_sat_C, 2)} °C at ${fmt(p_bar_a, 3)} bar a.`),
         { T_C, T_sat_C: sat.T_sat_C },
       );
     }
@@ -134,7 +137,7 @@ export class TableProvider implements PropertyProvider {
     const ps = this.pSatOfT(T_C);
     if (ps === null) {
       // Nemá nastat: tabulka kapaliny pokrývá T_liq_min … T_sat(p_max).
-      throw new PropertyRangeError('T_LIQ_BELOW_TABLE', `Teplota kapaliny ${fmt(T_C, 2)} °C mimo tabulku kapaliny.`, {
+      throw new PropertyRangeError('T_LIQ_BELOW_TABLE', tr(`Teplota kapaliny ${fmt(T_C, 2)} °C mimo tabulku kapaliny.`, `Liquid temperature ${fmt(T_C, 2)} °C outside the liquid table.`), {
         T_C,
       });
     }
@@ -142,7 +145,7 @@ export class TableProvider implements PropertyProvider {
     const h = interp2(L.T_C, L.dp_bar, L.h, T_C, dp);
     const rho = interp2(L.T_C, L.dp_bar, L.rho, T_C, dp);
     if (h === null || rho === null) {
-      throw new PropertyRangeError('T_LIQ_BELOW_TABLE', `Stav kapaliny mimo tabulku (T = ${fmt(T_C, 2)} °C, Δp = ${fmt(dp, 3)} bar).`, {
+      throw new PropertyRangeError('T_LIQ_BELOW_TABLE', tr(`Stav kapaliny mimo tabulku (T = ${fmt(T_C, 2)} °C, Δp = ${fmt(dp, 3)} bar).`, `Liquid state outside the table (T = ${fmt(T_C, 2)} °C, Δp = ${fmt(dp, 3)} bar).`), {
         T_C,
         dp,
       });

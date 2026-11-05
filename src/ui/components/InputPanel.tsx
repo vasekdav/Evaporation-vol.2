@@ -7,6 +7,7 @@ import { getProvider } from '../../core/properties';
 import type { FluidId } from '../../core/properties/types';
 import { FLOW_PER_NM3, type FlowUnit, type PressureKind } from '../../core/units';
 import { FIELD } from '../texts';
+import { tr } from '../../core/i18n';
 import { BasisEditor } from './BasisEditor';
 import { Field, NumberInput, Segmented, type FieldIssue } from './fields';
 import type { InputField } from '../../core/checks';
@@ -51,7 +52,8 @@ interface Props {
 }
 
 export function InputPanel({ input, onChange, onReset, customBases, onCustomBasesChange, issues = {} }: Props) {
-  const iss = (...keys: InputField[]): FieldIssue[] => keys.flatMap((k) => issues[k] ?? []);
+  // jedna kontrola může patřit k více polím téže položky – zobrazit ji jen jednou
+  const iss = (...keys: InputField[]): FieldIssue[] => [...new Map(keys.flatMap((k) => issues[k] ?? []).map((i) => [i.text, i])).values()];
   const bad = (k: InputField) => (issues[k] ?? []).some((i) => i.level === 'CHYBA');
   const set = <K extends keyof DesignInput>(key: K, value: DesignInput[K]) => onChange({ ...input, [key]: value });
   const meta = getProvider(input.fluid).meta;
@@ -91,28 +93,28 @@ export function InputPanel({ input, onChange, onReset, customBases, onCustomBase
     });
 
   return (
-    <form className="inputs-form" onSubmit={(e) => e.preventDefault()} aria-label="Vstupy">
+    <form className="inputs-form" onSubmit={(e) => e.preventDefault()} aria-label={tr('Vstupy', 'Inputs')}>
       <div className="inputs-top">
-        <h2>Vstupy</h2>
+        <h2>{tr('Vstupy', 'Inputs')}</h2>
         <button type="button" className="link-btn" onClick={onReset}>
-          Výchozí hodnoty
+          {tr('Výchozí hodnoty', 'Defaults')}
         </button>
       </div>
 
-      <Group title="1 · Potřeba" id="grp-need">
+      <Group title={tr('1 · Potřeba', '1 · Demand')} id="grp-need">
         <Field text={FIELD.fluid} issues={iss('fluid')}>
           <Segmented<FluidId>
-            ariaLabel="Látka"
+            ariaLabel={tr('Látka', 'Fluid')}
             value={input.fluid}
             options={[
-              { value: 'O2', label: 'O₂ kyslík' },
-              { value: 'N2', label: 'N₂ dusík' },
-              { value: 'Ar', label: 'Ar argon' },
+              { value: 'O2', label: tr('O₂ kyslík', 'O₂ oxygen') },
+              { value: 'N2', label: tr('N₂ dusík', 'N₂ nitrogen') },
+              { value: 'Ar', label: tr('Ar argon', 'Ar argon') },
             ]}
             onChange={(f) => onChange(withFluid(input, f))}
           />
         </Field>
-        <Field text={FIELD.flow} issues={iss('flow')} htmlFor={ids.flow} hint="Zadej špičku, ne průměr.">
+        <Field text={FIELD.flow} issues={iss('flow')} htmlFor={ids.flow} hint={tr('Zadej špičku, ne průměr.', 'Enter the peak, not the average.')}>
           <div className="row">
             <NumberInput
               id={ids.flow} flagged={bad('flow')}
@@ -120,7 +122,7 @@ export function InputPanel({ input, onChange, onReset, customBases, onCustomBase
               unit={FLOW_UNIT_SHORT[flowUnit]}
               onChange={(v) => set('flow', { ...input.flow, value: v ?? Number.NaN })}
             />
-            <select aria-label="Jednotka průtoku" value={flowUnit} onChange={(e) => setFlowUnit(e.target.value as FlowUnit)}>
+            <select aria-label={tr('Jednotka průtoku', 'Flow unit')} value={flowUnit} onChange={(e) => setFlowUnit(e.target.value as FlowUnit)}>
               {FLOW_UNITS.map((u) => (
                 <option key={u.value} value={u.value}>
                   {u.label}
@@ -140,11 +142,11 @@ export function InputPanel({ input, onChange, onReset, customBases, onCustomBase
         </Field>
       </Group>
 
-      <Group title="2 · Procesní podmínky" id="grp-process">
+      <Group title={tr('2 · Procesní podmínky', '2 · Process conditions')} id="grp-process">
         <Field
           text={FIELD.pressure} issues={iss('pressure')}
           htmlFor={ids.p}
-          hint={`Rozsah ${policy.formula}: ${fmt(meta.p_min_bar_a, 0)}–${fmt(meta.p_max_bar_a, 0)} bar a`}
+          hint={`${tr('Rozsah', 'Range')} ${policy.formula}: ${fmt(meta.p_min_bar_a, 0)}–${fmt(meta.p_max_bar_a, 0)} bar a`}
         >
           <div className="row">
             <NumberInput
@@ -154,11 +156,11 @@ export function InputPanel({ input, onChange, onReset, customBases, onCustomBase
               onChange={(v) => set('pressure', { ...input.pressure, value: v ?? Number.NaN })}
             />
             <Segmented<PressureKind>
-              ariaLabel="Druh tlaku"
+              ariaLabel={tr('Druh tlaku', 'Pressure type')}
               value={input.pressure.kind}
               options={[
-                { value: 'gauge', label: 'přetlak' },
-                { value: 'abs', label: 'absolutní' },
+                { value: 'gauge', label: tr('přetlak', 'gauge') },
+                { value: 'abs', label: tr('absolutní', 'absolute') },
               ]}
               onChange={setPressureKind}
             />
@@ -174,11 +176,11 @@ export function InputPanel({ input, onChange, onReset, customBases, onCustomBase
         </Field>
         <Field text={FIELD.liquid}>
           <Segmented<'subcooled' | 'saturated'>
-            ariaLabel="Stav kapaliny"
+            ariaLabel={tr('Stav kapaliny', 'Liquid state')}
             value={input.liquid.kind}
             options={[
-              { value: 'subcooled', label: 'podchlazená' },
-              { value: 'saturated', label: 'nasycená (minimum)' },
+              { value: 'subcooled', label: tr('podchlazená', 'subcooled') },
+              { value: 'saturated', label: tr('nasycená (minimum)', 'saturated (minimum)') },
             ]}
             onChange={(k) =>
               set('liquid', k === 'saturated' ? { kind: 'saturated' } : { kind: 'subcooled', T_C: policy.T_in_default_C })
@@ -189,7 +191,10 @@ export function InputPanel({ input, onChange, onReset, customBases, onCustomBase
           <Field
             text={FIELD.T_in} issues={iss('liquid')}
             htmlFor={ids.tin}
-            hint={`Od ${fmt(meta.T_liq_min_C, 0)} °C do T_sat při provozním tlaku; návrhový případ ${fmt(policy.T_in_default_C, 0)} °C`}
+            hint={tr(
+              `Od ${fmt(meta.T_liq_min_C, 0)} °C do T_sat při provozním tlaku; návrhový případ ${fmt(policy.T_in_default_C, 0)} °C`,
+              `From ${fmt(meta.T_liq_min_C, 0)} °C to T_sat at operating pressure; design case ${fmt(policy.T_in_default_C, 0)} °C`,
+            )}
           >
             <NumberInput
               id={ids.tin} flagged={bad('liquid')}
@@ -202,32 +207,35 @@ export function InputPanel({ input, onChange, onReset, customBases, onCustomBase
         <Field
           text={FIELD.T_out} issues={iss('T_out_C')}
           htmlFor={ids.tout}
-          hint={`Rozsah ${fmt(meta.T_gas_min_C, 0)} až +${fmt(meta.T_gas_max_C, 0)} °C, pod teplotou okolí`}
+          hint={tr(
+            `Rozsah ${fmt(meta.T_gas_min_C, 0)} až +${fmt(meta.T_gas_max_C, 0)} °C, pod teplotou okolí`,
+            `Range ${fmt(meta.T_gas_min_C, 0)} to +${fmt(meta.T_gas_max_C, 0)} °C, below ambient temperature`,
+          )}
         >
           <NumberInput id={ids.tout} flagged={bad('T_out_C')} value={input.T_out_C} unit="°C" onChange={(v) => set('T_out_C', v ?? Number.NaN)} />
         </Field>
       </Group>
 
-      <Group title="3 · Klima lokality" id="grp-climate">
+      <Group title={tr('3 · Klima lokality', '3 · Site climate')} id="grp-climate">
         <Field text={FIELD.T_amb} issues={iss('T_amb_C')} htmlFor={ids.tamb}>
           <NumberInput id={ids.tamb} flagged={bad('T_amb_C')} value={input.T_amb_C} unit="°C" onChange={(v) => set('T_amb_C', v ?? Number.NaN)} />
         </Field>
-        <Field text={FIELD.T_min_site} issues={iss('T_min_site_C')} htmlFor={ids.tmin} hint="Výpočtové teploty ČSN nejsou absolutní minima.">
+        <Field text={FIELD.T_min_site} issues={iss('T_min_site_C')} htmlFor={ids.tmin} hint={tr('Výpočtové teploty ČSN nejsou absolutní minima.', 'Design temperatures per ČSN are not absolute minima.')}>
           <NumberInput id={ids.tmin} flagged={bad('T_min_site_C')} optional value={input.T_min_site_C} unit="°C" onChange={(v) => set('T_min_site_C', v)} />
         </Field>
         <Field text={FIELD.RH} issues={iss('RH_winter_pct')} htmlFor={ids.rh}>
           <NumberInput id={ids.rh} flagged={bad('RH_winter_pct')} value={input.RH_winter_pct} unit="%" onChange={(v) => set('RH_winter_pct', v ?? Number.NaN)} />
         </Field>
         <Field text={FIELD.frostWeeks} issues={iss('frostWeeks')} htmlFor={ids.frost}>
-          <NumberInput id={ids.frost} flagged={bad('frostWeeks')} optional value={input.frostWeeks} unit="týdnů" onChange={(v) => set('frostWeeks', v)} />
+          <NumberInput id={ids.frost} flagged={bad('frostWeeks')} optional value={input.frostWeeks} unit={tr('týdnů', 'weeks')} onChange={(v) => set('frostWeeks', v)} />
         </Field>
       </Group>
 
-      <Group title="4 · Bezpečnost (křehký lom, TSL)" id="grp-safety">
+      <Group title={tr('4 · Bezpečnost (křehký lom, TSL)', '4 · Safety (brittle fracture, TSL)')} id="grp-safety">
         <Field text={FIELD.T_pipe_min} issues={iss('T_pipe_min_C')} htmlFor={ids.pipe}>
           <NumberInput id={ids.pipe} flagged={bad('T_pipe_min_C')} value={input.T_pipe_min_C} unit="°C" onChange={(v) => set('T_pipe_min_C', v ?? Number.NaN)} />
         </Field>
-        <Field text={FIELD.TSL} issues={iss('TSL_C')} htmlFor={ids.tsl} hint="Mez potrubí < TSL < návrhová T_out">
+        <Field text={FIELD.TSL} issues={iss('TSL_C')} htmlFor={ids.tsl} hint={tr('Mez potrubí < TSL < návrhová T_out', 'Piping limit < TSL < design T_out')}>
           <NumberInput id={ids.tsl} flagged={bad('TSL_C')} optional value={input.TSL_C} unit="°C" onChange={(v) => set('TSL_C', v)} />
         </Field>
         <Field text={FIELD.TSL_margin} issues={iss('TSL_margin_K')} htmlFor={ids.margin}>
@@ -235,13 +243,13 @@ export function InputPanel({ input, onChange, onReset, customBases, onCustomBase
         </Field>
       </Group>
 
-      <Group title="5 · Provoz" id="grp-operation">
+      <Group title={tr('5 · Provoz', '5 · Operation')} id="grp-operation">
         <Field text={FIELD.hoursPerDay} issues={iss('hoursPerDay', 'continuous24_7')} htmlFor={ids.hours}>
           <div className="row">
             <NumberInput
               id={ids.hours} flagged={bad('hoursPerDay')}
               value={input.continuous24_7 ? 24 : input.hoursPerDay}
-              unit="h/den"
+              unit={tr('h/den', 'h/day')}
               disabled={input.continuous24_7}
               onChange={(v) => set('hoursPerDay', v ?? Number.NaN)}
             />
@@ -257,28 +265,28 @@ export function InputPanel({ input, onChange, onReset, customBases, onCustomBase
         </Field>
         <Field text={FIELD.availability} issues={iss('availability')}>
           <Segmented<Availability>
-            ariaLabel="Dostupnost"
+            ariaLabel={tr('Dostupnost', 'Availability')}
             value={input.availability}
             options={[
               { value: 'N', label: 'N' },
               { value: 'N+1', label: 'N+1' },
-              { value: 'backup-heater', label: 'záložní ohřívač' },
+              { value: 'backup-heater', label: tr('záložní ohřívač', 'backup heater') },
             ]}
             onChange={(v) => set('availability', v)}
           />
         </Field>
-        <Field text={FIELD.T_actual_out} issues={iss('T_actual_out_C')} htmlFor={ids.tact} hint="Pro výpočet výkonu dohřevu.">
+        <Field text={FIELD.T_actual_out} issues={iss('T_actual_out_C')} htmlFor={ids.tact} hint={tr('Pro výpočet výkonu dohřevu.', 'For calculating the trim heater duty.')}>
           <NumberInput id={ids.tact} flagged={bad('T_actual_out_C')} optional value={input.T_actual_out_C} unit="°C" onChange={(v) => set('T_actual_out_C', v)} />
         </Field>
       </Group>
 
-      <Group title="6 · Katalogový základ (posouzení velikosti)" id="grp-basis">
+      <Group title={tr('6 · Katalogový základ (posouzení velikosti)', '6 · Catalogue basis (size assessment)')} id="grp-basis">
         <BasisEditor
           selectedId={input.catalogBasisId}
           customBases={customBases}
           onSelect={(id) => set('catalogBasisId', id)}
           onChangeBases={onCustomBasesChange}
-          hint={`Sloupec katalogu pro ${policy.formula}: ${policy.catalogColumn}`}
+          hint={`${tr('Sloupec katalogu pro', 'Catalogue column for')} ${policy.formula}: ${policy.catalogColumn}`}
         />
         <Field text={FIELD.k} issues={iss('k')} htmlFor={ids.k}>
           <NumberInput id={ids.k} flagged={bad('k')} value={input.k} unit="×" onChange={(v) => set('k', v ?? Number.NaN)} />

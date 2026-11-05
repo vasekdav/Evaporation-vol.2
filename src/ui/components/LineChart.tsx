@@ -1,5 +1,6 @@
 import { useId, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { fmt } from '../../core/format';
+import { tr } from '../../core/i18n';
 import type { Source } from '../texts';
 import { SourceTag } from './Qty';
 
@@ -133,7 +134,10 @@ export function LineChart({ title, src, xLabel, xUnit, yLabel, yUnit, series, ma
           viewBox={`0 0 ${W} ${H}`}
           role="img"
           tabIndex={0}
-          aria-label={`${title}. ${yLabel} [${yUnit}] v závislosti na ${xLabel} [${xUnit}]. Šipkami vlevo a vpravo procházej body; hodnoty jsou i v tabulce.`}
+          aria-label={tr(
+            `${title}. ${yLabel} [${yUnit}] v závislosti na ${xLabel} [${xUnit}]. Šipkami vlevo a vpravo procházej body; hodnoty jsou i v tabulce.`,
+            `${title}. ${yLabel} [${yUnit}] versus ${xLabel} [${xUnit}]. Use the left and right arrows to step through points; values are also in the table.`,
+          )}
           onPointerMove={onMove}
           onPointerLeave={() => setHover(null)}
           onKeyDown={onKey}
@@ -202,7 +206,7 @@ export function LineChart({ title, src, xLabel, xUnit, yLabel, yUnit, series, ma
                   <svg width="14" height="6" aria-hidden="true">
                     <line x1="1" y1="3" x2="13" y2="3" className={`ln s${s.slot}`} />
                   </svg>
-                  <strong>{y === null || y === undefined ? 'nelze' : `${fmt(y, yDecimals)} ${yUnit}`}</strong>{' '}
+                  <strong>{y === null || y === undefined ? tr('nelze', 'n/a') : `${fmt(y, yDecimals)} ${yUnit}`}</strong>{' '}
                   <span className="muted">{s.name}</span>
                 </div>
               );

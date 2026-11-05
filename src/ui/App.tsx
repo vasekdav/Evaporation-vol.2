@@ -18,19 +18,21 @@ import type { PageId } from './content/guide';
 import { EquationsPage, GuidePage, SourcesPage } from './pages/InfoPages';
 import { InquiryPage } from './pages/InquiryPage';
 import { LearnPage } from './pages/LearnPage';
-import { useCustomBases, useDesignInput, useInquiry } from './state';
+import { useCustomBases, useDesignInput, useInquiry, useLang, useTheme, type Theme } from './state';
+import { Segmented } from './components/fields';
+import { tr, type Lang } from '../core/i18n';
 import { APP } from './texts';
 
 export const APP_VERSION = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : 'dev';
 
-const PAGES: readonly { id: PageId; label: string }[] = [
-  { id: 'vypocet', label: 'Výpočet a návrh' },
-  { id: 'postup', label: 'Postup návrhu' },
-  { id: 'poptavka', label: 'Poptávka' },
-  { id: 'proc-ne-kw', label: 'Proč ne kW' },
-  { id: 'rovnice', label: 'Rovnice' },
-  { id: 'overeni', label: 'Ověření' },
-  { id: 'zdroje', label: 'Zdroje' },
+const PAGES: readonly { id: PageId; label: () => string }[] = [
+  { id: 'vypocet', label: () => tr('Výpočet a návrh', 'Calculation & design') },
+  { id: 'postup', label: () => tr('Postup návrhu', 'Design procedure') },
+  { id: 'poptavka', label: () => tr('Poptávka', 'Enquiry') },
+  { id: 'proc-ne-kw', label: () => tr('Proč ne kW', 'Why not kW') },
+  { id: 'rovnice', label: () => tr('Rovnice', 'Equations') },
+  { id: 'overeni', label: () => tr('Ověření', 'Verification') },
+  { id: 'zdroje', label: () => tr('Zdroje', 'Sources') },
 ];
 
 const pageFromHash = (): PageId => {
@@ -44,13 +46,19 @@ interface AppProps {
 }
 
 export function App({ initialCase }: AppProps = {}) {
+  const [lang, setLang] = useLang();
+  const [theme, setTheme] = useTheme();
   const [urlCase] = useState(() => (initialCase !== undefined ? initialCase : takeCaseFromUrl()));
   const okCase = urlCase?.ok ? urlCase : null;
   const [input, setInput, reset] = useDesignInput(okCase?.input);
   const [customBases, setCustomBases] = useCustomBases(okCase?.customBasis);
   const [inquiry, setInquiry] = useInquiry(okCase?.inquiry);
   const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(
-    urlCase ? (urlCase.ok ? { text: 'Případ načten ze sdíleného odkazu.' } : { text: `Odkaz nelze načíst: ${urlCase.reason}`, error: true }) : null,
+    urlCase
+      ? urlCase.ok
+        ? { text: tr('Případ načten ze sdíleného odkazu.', 'Case loaded from the shared link.') }
+        : { text: `${tr('Odkaz nelze načíst', 'The link cannot be loaded')}: ${urlCase.reason}`, error: true }
+      : null,
   );
   const [page, setPage] = useState<PageId>(pageFromHash);
   const [scrollTo, setScrollTo] = useState<string | null>(null);
@@ -92,7 +100,8 @@ export function App({ initialCase }: AppProps = {}) {
   };
 
   // výsledky se přepočítávají okamžitě; evaluate je čistá funkce
-  const ev = useMemo(() => evaluate(input, { extraBases: customBases }), [input, customBases]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- jazyk mění texty výsledku
+  const ev = useMemo(() => evaluate(input, { extraBases: customBases }), [input, customBases, lang]);
   const basis = findBasis(input.catalogBasisId, customBases);
   const meta = getProvider(input.fluid).meta;
 
@@ -108,11 +117,11 @@ export function App({ initialCase }: AppProps = {}) {
     for (const c of ev.checks) {
       if ((c.level !== 'CHYBA' && c.level !== 'POZOR') || !c.fields) continue;
       const lvl = c.level;
-      const text = c.id === 'K1' ? 'Neplatná nebo chybějící hodnota (K1).' : `${c.id}: ${c.message}`;
+      const text = c.id === 'K1' ? tr('Neplatná nebo chybějící hodnota (K1).', 'Invalid or missing value (K1).') : `${c.id}: ${c.message}`;
       for (const f of c.fields) (out[f] ??= []).push({ level: lvl, text });
     }
     return out;
-  }, [ev.checks]);
+  }, [ev.checks, lang]);
 
   return (
     <div className="app">
@@ -124,8 +133,28 @@ export function App({ initialCase }: AppProps = {}) {
         <p className="disclaimer" role="note">
           {APP.disclaimer}
         </p>
+        <div className="prefs">
+          <Segmented<Lang>
+            ariaLabel={tr('Jazyk', 'Language')}
+            value={lang}
+            options={[
+              { value: 'cs', label: 'CZ' },
+              { value: 'en', label: 'EN' },
+            ]}
+            onChange={setLang}
+          />
+          <Segmented<Theme>
+            ariaLabel={tr('Barevný režim', 'Colour mode')}
+            value={theme}
+            options={[
+              { value: 'light', label: tr('☀ Světlý', '☀ Light') },
+              { value: 'dark', label: tr('☾ Tmavý', '☾ Dark') },
+            ]}
+            onChange={setTheme}
+          />
+        </div>
       </header>
-      <nav className="tabs" aria-label="Stránky">
+      <nav className="tabs" aria-label={tr('Stránky', 'Pages')}>
         {PAGES.map((p) => (
           <button
             key={p.id}
@@ -134,7 +163,7 @@ export function App({ initialCase }: AppProps = {}) {
             aria-current={page === p.id ? 'page' : undefined}
             onClick={() => go(p.id)}
           >
-            {p.label}
+            {p.label()}
           </button>
         ))}
       </nav>
@@ -142,7 +171,7 @@ export function App({ initialCase }: AppProps = {}) {
         <div className={`notice${notice.error ? ' err' : ''}`} role="status">
           {notice.text}{' '}
           <button type="button" className="link-btn" onClick={() => setNotice(null)}>
-            zavřít
+            {tr('zavřít', 'close')}
           </button>
         </div>
       ) : null}
@@ -150,7 +179,7 @@ export function App({ initialCase }: AppProps = {}) {
       {page === 'vypocet' ? (
         <>
           {/* úzká obrazovka (tablet na výšku): výsledek stále na očích, i když jsou vstupy nahoře */}
-          <div className={`summary-bar ${ev.duty ? '' : 'summary-invalid'}`} role="region" aria-label="Souhrn výsledku">
+          <div className={`summary-bar ${ev.duty ? '' : 'summary-invalid'}`} role="region" aria-label={tr('Souhrn výsledku', 'Result summary')}>
             <span className="summary-status">{ev.statusText}</span>
             {statusReasons(ev).length ? (
               <span className="summary-reasons" data-narrative="">
@@ -166,7 +195,7 @@ export function App({ initialCase }: AppProps = {}) {
                 Q = <Qty v={ev.duty.Q_kW} unit="kW" src="VYPOCET" />
               </span>
             ) : null}
-            <a href="#res-h">výsledky ↓</a>
+            <a href="#res-h">{tr('výsledky ↓', 'results ↓')}</a>
           </div>
           <div className="layout">
             <aside className="inputs">
@@ -181,7 +210,7 @@ export function App({ initialCase }: AppProps = {}) {
             </aside>
             <main className="results" data-results="">
               <h2 id="page-top" className="sr-only" tabIndex={-1}>
-                Výsledky výpočtu
+                {tr('Výsledky výpočtu', 'Calculation results')}
               </h2>
               <StatusBanner ev={ev} />
               <SectionNav />
@@ -210,12 +239,12 @@ export function App({ initialCase }: AppProps = {}) {
           {page === 'postup' ? <GuidePage fluid={input.fluid} go={go} ev={ev} inquiry={inquiry} basis={basis} /> : null}
           {page === 'proc-ne-kw' ? <LearnPage ev={ev} basis={basis} /> : null}
           {page === 'rovnice' ? <EquationsPage /> : null}
-          {page === 'overeni' ? <VerificationPage /> : null}
+          {page === 'overeni' ? <VerificationPage key={lang} /> : null}
           {page === 'zdroje' ? <SourcesPage /> : null}
         </div>
       )}
       <footer className="app-footer" data-narrative="">
-        Verze {APP_VERSION} · vlastnosti látek CoolProp {meta.coolprop_version} · {APP.disclaimer}
+        {tr('Verze', 'Version')} {APP_VERSION} · {tr('vlastnosti látek', 'fluid properties')} CoolProp {meta.coolprop_version} · {APP.disclaimer}
       </footer>
     </div>
   );

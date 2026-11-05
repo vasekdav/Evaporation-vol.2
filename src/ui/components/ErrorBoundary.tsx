@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { BASES_KEY, INQUIRY_KEY, STORAGE_KEY } from '../state';
+import { tr } from '../../core/i18n';
 
 interface State {
   error: Error | null;
@@ -40,18 +41,20 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
     if (!this.state.error) return this.props.children;
     return (
       <div className="crash" role="alert">
-        <h1>Aplikace narazila na chybu</h1>
+        <h1>{tr('Aplikace narazila na chybu', 'The application encountered an error')}</h1>
         <p>
-          Nejčastější příčinou jsou poškozená uložená data (poslední vstupy, vlastní katalogové základy nebo poptávka v tomto
-          prohlížeči).
+          {tr(
+            'Nejčastější příčinou jsou poškozená uložená data (poslední vstupy, vlastní katalogové základy nebo poptávka v tomto prohlížeči).',
+            'The most common cause is corrupted saved data (last inputs, custom catalogue bases or the enquiry in this browser).',
+          )}
         </p>
         <p className="muted">{this.state.error.message}</p>
         <div className="row">
           <button type="button" className="btn btn-primary" onClick={() => this.reset(true)}>
-            Smazat uložená data a začít znovu
+            {tr('Smazat uložená data a začít znovu', 'Clear saved data and start again')}
           </button>
           <button type="button" className="btn" onClick={() => this.reset(false)}>
-            Zkusit znovu
+            {tr('Zkusit znovu', 'Try again')}
           </button>
         </div>
       </div>

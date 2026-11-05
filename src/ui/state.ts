@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import type { CatalogBasis } from '../core/catalog';
 import { defaultInput, type DesignInput } from '../core/input';
 import { restoreBases, restoreInput } from '../core/restore';
+import { setLang as setCoreLang, type Lang } from '../core/i18n';
 
 export { restoreBases, restoreInput };
 
@@ -86,4 +87,76 @@ export function useInquiry(initial?: Record<string, string>): [Record<string, st
     }
   }, [inq]);
   return [inq, setInq];
+}
+
+// ------------------------------------------------------------ jazyk a barevný režim
+export const LANG_KEY = 'odparovac.lang.v1';
+export const THEME_KEY = 'odparovac.theme.v1';
+export type Theme = 'light' | 'dark';
+
+function readPref(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function writePref(key: string, v: string) {
+  try {
+    window.localStorage.setItem(key, v);
+  } catch {
+    /* úložiště nedostupné – nevadí */
+  }
+}
+
+/** Jazyk UI: uložená volba, jinak podle prohlížeče (čeština / slovenština → CZ, jinak EN). */
+export function initialLang(): Lang {
+  const saved = readPref(LANG_KEY);
+  if (saved === 'cs' || saved === 'en') return saved;
+  const nav = typeof navigator !== 'undefined' ? navigator.language.toLowerCase() : 'cs';
+  return nav.startsWith('cs') || nav.startsWith('sk') ? 'cs' : 'en';
+}
+
+export function useLang(): [Lang, (l: Lang) => void] {
+  const [lang, setLangState] = useState<Lang>(() => {
+    const l = initialLang();
+    setCoreLang(l);
+    return l;
+  });
+  const set = (l: Lang) => {
+    setCoreLang(l); // jádro musí znát jazyk dřív, než se překreslí
+    writePref(LANG_KEY, l);
+    setLangState(l);
+  };
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+  return [lang, set];
+}
+
+/** Barevný režim: uložená volba, jinak systémové nastavení. */
+export function initialTheme(): Theme {
+  const saved = readPref(THEME_KEY);
+  if (saved === 'light' || saved === 'dark') return saved;
+  try {
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
+}
+
+export function useTheme(): [Theme, (t: Theme) => void] {
+  const [theme, setThemeState] = useState<Theme>(() => {
+    const t = initialTheme();
+    document.documentElement.dataset.theme = t; // hned, ať se stránka nepřebarví až po prvním vykreslení
+    return t;
+  });
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+  const set = (t: Theme) => {
+    writePref(THEME_KEY, t);
+    setThemeState(t);
+  };
+  return [theme, set];
 }

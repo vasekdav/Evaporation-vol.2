@@ -13,6 +13,8 @@ import { getProvider } from './properties';
 import { FLUID_IDS, type FluidId } from './properties/types';
 import { absoluteHumidity_g_kg } from './psychro';
 import { catalogUA1, sizeBranch } from './sizing';
+import { levelText, statusBase } from './checks';
+import { getLang, setLang, tr } from './i18n';
 
 export type Tolerance = { kind: 'rel'; value: number } | { kind: 'abs'; value: number };
 
@@ -48,6 +50,18 @@ export type VerificationRow = NumericRow | CheckRow;
 
 const P6 = 6.01325;
 
+/** Překlad názvů referenčních případů (data jsou česky). */
+function caseName(n: string): string {
+  if (getLang() !== 'en') return n;
+  return n
+    .replace(/^Výchozí/, 'Default')
+    .replace(/^Nasycená/, 'Saturated')
+    .replace(/nasycená/g, 'saturated')
+    .replace(/^Mimo mřížku/, 'Off-grid')
+    .replace(/ a TSL /g, ' and TSL ')
+    .replace(/(\d),(\d)/g, '$1.$2');
+}
+
 function num(
   group: string,
   fluid: NumericRow['fluid'],
@@ -58,7 +72,7 @@ function num(
   tol: Tolerance,
 ): NumericRow {
   const deviation = tol.kind === 'rel' ? actual / ref - 1 : actual - ref;
-  return { type: 'num', group, fluid, name, unit, ref, actual, tol, deviation, pass: Math.abs(deviation) <= tol.value };
+  return { type: 'num', group, fluid, name: caseName(name), unit, ref, actual, tol, deviation, pass: Math.abs(deviation) <= tol.value };
 }
 
 interface QCase {
@@ -137,15 +151,15 @@ function fluidRows(f: FluidId): VerificationRow[] {
   const Tin0 = FLUID_POLICY[f].T_in_default_C;
   const s = props.sat(P6);
   const rows: VerificationRow[] = [
-    num('Vlastnosti', f, 'ρn (0 °C; 1,01325 bar)', 'kg/Nm³', ref.rho_n, props.meta.rho_n_kg_Nm3, { kind: 'abs', value: 5e-7 }),
-    num('Vlastnosti', f, 'Normální bod varu', '°C', ref.nbp, props.sat(1.01325).T_sat_C, TOL_T),
-    num('Vlastnosti', f, 'r(1 atm)', 'kJ/kg', ref.r_atm, props.sat(1.01325).r_kJ_kg, TOL_Q),
-    num('Vlastnosti', f, 'T_sat(6,01325 bar a)', '°C', ref.Tsat, s.T_sat_C, TOL_T),
-    num('Vlastnosti', f, 'r(6,01325 bar a)', 'kJ/kg', ref.r, s.r_kJ_kg, TOL_H),
-    num('Vlastnosti', f, 'h_l,sat(6,01325 bar a)', 'kJ/kg', ref.hl, s.h_l_kJ_kg, TOL_H),
-    num('Vlastnosti', f, 'h_v,sat(6,01325 bar a)', 'kJ/kg', ref.hv, s.h_v_kJ_kg, TOL_H),
-    num('Vlastnosti', f, 'h(6,01325 bar a; −30 °C)', 'kJ/kg', ref.hgas, props.gasH(P6, -30), TOL_H),
-    num('Vlastnosti', f, `h_l(6,01325 bar a; ${Tin0} °C)`.replace('-', '−'), 'kJ/kg', ref.hliq, props.liquid(P6, Tin0).h_kJ_kg, TOL_H),
+    num(tr('Vlastnosti', 'Properties'), f, tr('ρn (0 °C; 1,01325 bar)', 'ρn (0 °C; 1.01325 bar)'), 'kg/Nm³', ref.rho_n, props.meta.rho_n_kg_Nm3, { kind: 'abs', value: 5e-7 }),
+    num(tr('Vlastnosti', 'Properties'), f, tr('Normální bod varu', 'Normal boiling point'), '°C', ref.nbp, props.sat(1.01325).T_sat_C, TOL_T),
+    num(tr('Vlastnosti', 'Properties'), f, 'r(1 atm)', 'kJ/kg', ref.r_atm, props.sat(1.01325).r_kJ_kg, TOL_Q),
+    num(tr('Vlastnosti', 'Properties'), f, 'T_sat(6,01325 bar a)', '°C', ref.Tsat, s.T_sat_C, TOL_T),
+    num(tr('Vlastnosti', 'Properties'), f, 'r(6,01325 bar a)', 'kJ/kg', ref.r, s.r_kJ_kg, TOL_H),
+    num(tr('Vlastnosti', 'Properties'), f, 'h_l,sat(6,01325 bar a)', 'kJ/kg', ref.hl, s.h_l_kJ_kg, TOL_H),
+    num(tr('Vlastnosti', 'Properties'), f, 'h_v,sat(6,01325 bar a)', 'kJ/kg', ref.hv, s.h_v_kJ_kg, TOL_H),
+    num(tr('Vlastnosti', 'Properties'), f, 'h(6,01325 bar a; −30 °C)', 'kJ/kg', ref.hgas, props.gasH(P6, -30), TOL_H),
+    num(tr('Vlastnosti', 'Properties'), f, `h_l(6,01325 bar a; ${Tin0} °C)`.replace('-', '−'), 'kJ/kg', ref.hliq, props.liquid(P6, Tin0).h_kJ_kg, TOL_H),
   ];
   for (const c of Q_CASES[f]) {
     const d = computeDuty(props, {
@@ -154,25 +168,25 @@ function fluidRows(f: FluidId): VerificationRow[] {
       T_out_C: c.Tout,
       liquid: c.Tin === null ? { kind: 'saturated' } : { kind: 'subcooled', T_C: c.Tin },
     });
-    rows.push(num('Výkon Q', f, c.name, 'kW', c.Q, d.Q_kW, TOL_Q));
-    if (c.QI !== undefined) rows.push(num('Výkon Q', f, `${c.name} – Q_I`, 'kW', c.QI, d.Q_I_kW, TOL_Q));
-    if (c.QII !== undefined) rows.push(num('Výkon Q', f, `${c.name} – Q_II`, 'kW', c.QII, d.Q_II_kW, TOL_Q));
+    rows.push(num(tr('Výkon Q', 'Duty Q'), f, c.name, 'kW', c.Q, d.Q_kW, TOL_Q));
+    if (c.QI !== undefined) rows.push(num(tr('Výkon Q', 'Duty Q'), f, `${c.name} – Q_I`, 'kW', c.QI, d.Q_I_kW, TOL_Q));
+    if (c.QII !== undefined) rows.push(num(tr('Výkon Q', 'Duty Q'), f, `${c.name} – Q_II`, 'kW', c.QII, d.Q_II_kW, TOL_Q));
   }
   const chart = findBasis('chart-supergap-eu')!;
   const ua1 = catalogUA1(props, chart);
   if (ua1.ok)
-    rows.push(num('Velikost', f, 'UA₁ (Chart SuperGap EU)', 'W/K na Nm³/h', UA1_REF[f], ua1.UA1_W_K_per_Nm3h, { kind: 'abs', value: 5e-4 }));
+    rows.push(num(tr('Velikost', 'Sizing'), f, 'UA₁ (Chart SuperGap EU)', tr('W/K na Nm³/h', 'W/K per Nm³/h'), UA1_REF[f], ua1.UA1_W_K_per_Nm3h, { kind: 'abs', value: 5e-4 }));
   for (const c of NEQ_REF[f]) {
     const d = computeDuty(props, { Vn_Nm3_h: 1000, p_bar_a: P6, T_out_C: c.Tout, liquid: { kind: 'subcooled', T_C: Tin0 } });
     const sz = sizeBranch(props, d, chart, c.Ta, 1);
     rows.push(
-      num('Velikost', f, `N_eq ${c.Ta} °C / ${c.Tout} °C`.replace(/-/g, '−'), 'Nm³/h', c.N, sz.ok ? sz.N_eq_Nm3_h : Number.NaN, TOL_Q),
+      num(tr('Velikost', 'Sizing'), f, `N_eq ${c.Ta} °C / ${c.Tout} °C`.replace(/-/g, '−'), 'Nm³/h', c.N, sz.ok ? sz.N_eq_Nm3_h : Number.NaN, TOL_Q),
     );
   }
   const m = computeDuty(props, { Vn_Nm3_h: 1000, p_bar_a: P6, T_out_C: -30, liquid: { kind: 'subcooled', T_C: Tin0 } }).m_kg_s;
   for (const r of REHEAT_REF[f]) {
     rows.push(
-      num('Dohřev', f, `−40 → ${r.to} °C`.replace('-', '−'), 'kW', r.Q, reheat(props, m, P6, -40, r.to)?.Q_kW ?? Number.NaN, TOL_Q),
+      num(tr('Dohřev', 'Trim heater'), f, `−40 → ${r.to} °C`.replace('-', '−'), 'kW', r.Q, reheat(props, m, P6, -40, r.to)?.Q_kW ?? Number.NaN, TOL_Q),
     );
   }
   return rows;
@@ -183,10 +197,18 @@ function checkRow(
   fluid: CheckRow['fluid'],
   inp: DesignInput,
   expected: string,
-  test: (e: ReturnType<typeof evaluate>) => { pass: boolean; actual: string },
+  test: (e: ReturnType<typeof evaluate>) => { pass: boolean; actual: () => string },
 ): CheckRow {
-  const r = test(evaluate(inp));
-  return { type: 'check', group: 'Kontroly', fluid, name, expected, actual: r.actual, pass: r.pass };
+  // vyhodnocení vždy v češtině – testy porovnávají texty zpráv ze zadání
+  const prev = getLang();
+  setLang('cs');
+  let r: { pass: boolean; actual: () => string };
+  try {
+    r = test(evaluate(inp));
+  } finally {
+    setLang(prev);
+  }
+  return { type: 'check', group: tr('Kontroly', 'Checks'), fluid, name, expected, actual: r.actual(), pass: r.pass };
 }
 
 function level(e: ReturnType<typeof evaluate>, id: string) {
@@ -196,37 +218,40 @@ function level(e: ReturnType<typeof evaluate>, id: string) {
 export function runVerification(): VerificationRow[] {
   const rows: VerificationRow[] = FLUID_IDS.flatMap(fluidRows);
   rows.push(
-    num('Psychrometrie', 'společné', '20 °C / 75 % RH', 'g/kg', 10.93, absoluteHumidity_g_kg(20, 75), { kind: 'abs', value: 0.005 }),
-    num('Psychrometrie', 'společné', '−15 °C / 85 % RH (nad ledem)', 'g/kg', 0.86, absoluteHumidity_g_kg(-15, 85), { kind: 'abs', value: 0.005 }),
+    num(tr('Psychrometrie', 'Psychrometrics'), 'společné', '20 °C / 75 % RH', 'g/kg', 10.93, absoluteHumidity_g_kg(20, 75), { kind: 'abs', value: 0.005 }),
+    num(tr('Psychrometrie', 'Psychrometrics'), 'společné', tr('−15 °C / 85 % RH (nad ledem)', '−15 °C / 85 % RH (over ice)'), 'g/kg', 0.86, absoluteHumidity_g_kg(-15, 85), { kind: 'abs', value: 0.005 }),
   );
   rows.push(
-    checkRow('N₂ při 35 bar a', 'N2', { ...defaultInput('N2'), pressure: { value: 35, kind: 'abs' } }, 'K2 CHYBA „nad kritickým tlakem dusíku, mimo rozsah“', (e) => {
+    checkRow(tr('N₂ při 35 bar a', 'N₂ at 35 bar a'), 'N2', { ...defaultInput('N2'), pressure: { value: 35, kind: 'abs' } }, tr('K2 CHYBA „nad kritickým tlakem dusíku, mimo rozsah“', 'K2 ERROR “above the critical pressure of nitrogen, out of range”'), (e) => {
       const k = level(e, 'K2');
-      return { pass: k.level === 'CHYBA' && k.message.includes('nad kritickým tlakem dusíku') && k.message.includes('mimo rozsah'), actual: `K2 ${k.level}` };
+      return { pass: k.level === 'CHYBA' && k.message.includes('nad kritickým tlakem dusíku') && k.message.includes('mimo rozsah'), actual: () => `K2 ${levelText(k.level)}` };
     }),
-    checkRow('Ar při 41 bar a', 'Ar', { ...defaultInput('Ar'), pressure: { value: 41, kind: 'abs' } }, 'K2 CHYBA (mimo rozsah 1–40 bar a)', (e) => {
+    checkRow(tr('Ar při 41 bar a', 'Ar at 41 bar a'), 'Ar', { ...defaultInput('Ar'), pressure: { value: 41, kind: 'abs' } }, tr('K2 CHYBA (mimo rozsah 1–40 bar a)', 'K2 ERROR (outside the range 1–40 bar a)'), (e) => {
       const k = level(e, 'K2');
-      return { pass: k.level === 'CHYBA' && e.duty === null, actual: `K2 ${k.level}` };
+      return { pass: k.level === 'CHYBA' && e.duty === null, actual: () => `K2 ${levelText(k.level)}` };
     }),
-    checkRow('Ar s kapalinou −195 °C', 'Ar', { ...defaultInput('Ar'), liquid: { kind: 'subcooled', T_C: -195 } }, 'K5 CHYBA (pod trojným bodem −189,34 °C)', (e) => {
+    checkRow(tr('Ar s kapalinou −195 °C', 'Ar with liquid at −195 °C'), 'Ar', { ...defaultInput('Ar'), liquid: { kind: 'subcooled', T_C: -195 } }, tr('K5 CHYBA (pod trojným bodem −189,34 °C)', 'K5 ERROR (below the triple point −189.34 °C)'), (e) => {
       const k = level(e, 'K5');
-      return { pass: k.level === 'CHYBA' && k.message.includes('pod trojným bodem'), actual: `K5 ${k.level}` };
+      return { pass: k.level === 'CHYBA' && k.message.includes('pod trojným bodem'), actual: () => `K5 ${levelText(k.level)}` };
     }),
-    checkRow('N₂ s kapalinou −215 °C', 'N2', { ...defaultInput('N2'), liquid: { kind: 'subcooled', T_C: -215 } }, 'K5 CHYBA (pod trojným bodem)', (e) => {
+    checkRow(tr('N₂ s kapalinou −215 °C', 'N₂ with liquid at −215 °C'), 'N2', { ...defaultInput('N2'), liquid: { kind: 'subcooled', T_C: -215 } }, tr('K5 CHYBA (pod trojným bodem)', 'K5 ERROR (below the triple point)'), (e) => {
       const k = level(e, 'K5');
-      return { pass: k.level === 'CHYBA' && k.message.includes('pod trojným bodem'), actual: `K5 ${k.level}` };
+      return { pass: k.level === 'CHYBA' && k.message.includes('pod trojným bodem'), actual: () => `K5 ${levelText(k.level)}` };
     }),
   );
   for (const f of FLUID_IDS) {
     rows.push(
-      checkRow('T_out −25 °C a TSL −25 °C', f, { ...defaultInput(f), T_out_C: -25, TSL_C: -25 }, 'K8 CHYBA, „Výkon platný, ale NÁVRH NEVYHOVUJE“', (e) => {
+      checkRow(tr('T_out −25 °C a TSL −25 °C', 'T_out −25 °C and TSL −25 °C'), f, { ...defaultInput(f), T_out_C: -25, TSL_C: -25 }, tr('K8 CHYBA, „Výkon platný, ale NÁVRH NEVYHOVUJE“', 'K8 ERROR, “Duty valid, but DESIGN FAILS”'), (e) => {
         const k = level(e, 'K8');
-        return { pass: k.level === 'CHYBA' && e.status === 'DESIGN_FAILS', actual: `K8 ${k.level}; ${e.statusText}` };
+        return { pass: k.level === 'CHYBA' && e.status === 'DESIGN_FAILS', actual: () => `K8 ${levelText(k.level)}; ${statusBase(e.status)}` };
       }),
-      checkRow('T_min −35 °C a T_out −30 °C', f, { ...defaultInput(f), T_min_site_C: -35, T_out_C: -30 }, 'K4 POZOR, posouzení velikosti „nelze“', (e) => {
+      checkRow(tr('T_min −35 °C a T_out −30 °C', 'T_min −35 °C and T_out −30 °C'), f, { ...defaultInput(f), T_min_site_C: -35, T_out_C: -30 }, tr('K4 POZOR, posouzení velikosti „nelze“', 'K4 WARNING, sizing “not possible”'), (e) => {
         const k = level(e, 'K4');
         const sizingNo = e.sizing !== null && !e.sizing.ok;
-        return { pass: k.level === 'POZOR' && sizingNo, actual: `K4 ${k.level}; velikost ${sizingNo ? 'nelze' : 'spočtena'}` };
+        return {
+          pass: k.level === 'POZOR' && sizingNo,
+          actual: () => `K4 ${levelText(k.level)}; ${sizingNo ? tr('velikost nelze', 'sizing not possible') : tr('velikost spočtena', 'sizing calculated')}`,
+        };
       }),
     );
   }

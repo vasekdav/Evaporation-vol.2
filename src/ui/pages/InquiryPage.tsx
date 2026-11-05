@@ -3,13 +3,15 @@ import type { CatalogBasis } from '../../core/catalog';
 import type { Evaluation } from '../../core/evaluate';
 import { buildInquiry, checkInquiry, fieldValue, missingInquiryFields, type InquiryField } from '../../core/inquiry';
 import { SourceTag } from '../components/Qty';
+import { tr } from '../../core/i18n';
 
-const SRC_LABEL: Record<InquiryField['source'], string> = {
-  VSTUP: 'ze vstupů',
-  VYPOCET: 'z výpočtu',
-  PRAXE: 'praxe',
-  DOPLNIT: 'doplnit',
-};
+const srcLabel = (s: InquiryField['source']): string =>
+  ({
+    VSTUP: tr('ze vstupů', 'from inputs'),
+    VYPOCET: tr('z výpočtu', 'from calculation'),
+    PRAXE: tr('praxe', 'practice'),
+    DOPLNIT: tr('doplnit', 'to fill in'),
+  })[s];
 
 function FieldEditor({
   f,
@@ -27,7 +29,7 @@ function FieldEditor({
   const id = useId();
   const tag =
     f.source === 'DOPLNIT' ? (
-      <span className="src src-DOPLNIT">DOPLNIT</span>
+      <span className="src src-DOPLNIT">{tr('DOPLNIT', 'TO FILL')}</span>
     ) : f.source === 'VYPOCET' ? (
       <SourceTag src="VYPOCET" />
     ) : f.source === 'PRAXE' ? (
@@ -40,10 +42,10 @@ function FieldEditor({
       <div className="inq-field-head">
         <label htmlFor={id}>{f.label}</label>
         {tag}
-        <span className="muted small">{edited ? 'upraveno' : SRC_LABEL[f.source]}</span>
+        <span className="muted small">{edited ? tr('upraveno', 'edited') : srcLabel(f.source)}</span>
         {edited ? (
           <button type="button" className="link-btn small" onClick={onReset}>
-            vrátit předvyplněné
+            {tr('vrátit předvyplněné', 'restore prefilled')}
           </button>
         ) : null}
       </div>
@@ -97,30 +99,39 @@ export function InquiryPage({ ev, basis, overrides, onChange, toolbar }: Props) 
   return (
     <div className="inquiry">
       <section className="card">
-        <h2>Poptávka pro výrobce</h2>
+        <h2>{tr('Poptávka pro výrobce', 'Enquiry for the manufacturer')}</h2>
         <p className="note">
-          Formulář je předvyplněný ze vstupů a výsledků výpočtu. Ke každé položce je uvedeno, proč ji výrobce potřebuje. Velikost
-          a garanci určuje výrobce přepočtem na lokalitu – poptávka proto popisuje podmínky, ne model.
+          {tr(
+            'Formulář je předvyplněný ze vstupů a výsledků výpočtu. Ke každé položce je uvedeno, proč ji výrobce potřebuje. Velikost a garanci určuje výrobce přepočtem na lokalitu – poptávka proto popisuje podmínky, ne model.',
+            'The form is prefilled from the inputs and calculation results. Each item states why the manufacturer needs it. The size and guarantee are set by the manufacturer recalculating for the site – the enquiry therefore describes conditions, not a model.',
+          )}
         </p>
         {toolbar}
         <div className={`status ${mism.length ? 'st-warn' : 'st-ok'}`} role="status" data-testid="inquiry-check">
           {mism.length
-            ? `Poptávka se liší od vstupů výpočtu v ${mism.length} ${mism.length === 1 ? 'poli' : 'polích'}`
-            : 'Svázaná pole poptávky odpovídají vstupům výpočtu'}
+            ? tr(
+                `Poptávka se liší od vstupů výpočtu v ${mism.length} ${mism.length === 1 ? 'poli' : 'polích'}`,
+                `The enquiry differs from the calculation inputs in ${mism.length} ${mism.length === 1 ? 'field' : 'fields'}`,
+              )
+            : tr('Svázaná pole poptávky odpovídají vstupům výpočtu', 'Linked enquiry fields match the calculation inputs')}
         </div>
         {mism.length ? (
           <ul className="mismatch">
             {mism.map((m) => (
               <li key={m.key}>
-                <strong>{m.label}:</strong> ve formuláři „{m.actual}“, ze vstupů „{m.expected}“{' '}
+                <strong>{m.label}:</strong> {tr('ve formuláři', 'in the form')} „{m.actual}“, {tr('ze vstupů', 'from inputs')} „{m.expected}“{' '}
                 <button type="button" className="link-btn small" onClick={() => reset(m.key)}>
-                  použít hodnotu ze vstupů
+                  {tr('použít hodnotu ze vstupů', 'use the input value')}
                 </button>
               </li>
             ))}
           </ul>
         ) : null}
-        {missing.length ? <p className="note">K doplnění zbývá {missing.length} polí (označena DOPLNIT).</p> : null}
+        {missing.length ? (
+          <p className="note">
+            {tr(`K doplnění zbývá ${missing.length} polí (označena DOPLNIT).`, `${missing.length} fields remain to be filled in (marked TO FILL).`)}
+          </p>
+        ) : null}
       </section>
       {items.map((it) => (
         <section className="card inq-item" key={it.id} aria-labelledby={`inq-${it.id}`}>
@@ -139,7 +150,7 @@ export function InquiryPage({ ev, basis, overrides, onChange, toolbar }: Props) 
               ))}
             </div>
             <aside className="why-box">
-              <div className="why-label">Proč to výrobce potřebuje</div>
+              <div className="why-label">{tr('Proč to výrobce potřebuje', 'Why the manufacturer needs it')}</div>
               <p>{it.why}</p>
             </aside>
           </div>

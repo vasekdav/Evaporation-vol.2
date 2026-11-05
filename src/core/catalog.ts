@@ -5,6 +5,7 @@
 import basesJson from '../data/catalog/bases.json';
 import modelsJson from '../data/catalog/models.json';
 import type { CatalogColumn } from './fluids';
+import { getLang, tr } from './i18n';
 import type { PressureValue } from './units';
 
 export interface CatalogBasis {
@@ -26,6 +27,8 @@ export interface CatalogBasis {
   wind_m_s: number | null;
   hpLinedFactor: number | null;
   note: string;
+  /** anglický překlad poznámky (vestavěné základy) */
+  note_en?: string;
   source: string;
   modelsId: string | null;
 }
@@ -50,7 +53,16 @@ export interface CatalogModelSet {
 export const CATALOG_BASES: readonly CatalogBasis[] = basesJson.bases as CatalogBasis[];
 export const CATALOG_MODEL_SETS: readonly CatalogModelSet[] = modelsJson.sets as CatalogModelSet[];
 
+export function illustrationTitle(): string {
+  return tr('Ilustrace z katalogu – výběr a garance výrobce', 'Catalogue illustration – selection and guarantee by the manufacturer');
+}
+/** Kompatibilita (čeština). */
 export const ILLUSTRATION_TITLE = 'Ilustrace z katalogu – výběr a garance výrobce';
+
+/** Poznámka základu v jazyce UI (vlastní základy mají jen jednu). */
+export function basisNote(b: CatalogBasis): string {
+  return getLang() === 'en' && b.note_en ? b.note_en : b.note;
+}
 
 export function findBasis(id: string, extra: readonly CatalogBasis[] = []): CatalogBasis | undefined {
   return [...extra, ...CATALOG_BASES].find((b) => b.id === id);

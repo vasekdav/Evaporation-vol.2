@@ -36,10 +36,11 @@
   line-height: 1.45;
   color: var(--text);
   background: var(--bg);
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #12161b;
     --surface: #1b2128;
     --surface-2: #222a33;
@@ -65,7 +66,36 @@
     --warn-bg: #3d2f12;
     --err: #ff9b91;
     --err-bg: #4a1f1b;
+    color-scheme: dark;
   }
+}
+:root[data-theme='dark'] {
+  --bg: #12161b;
+  --surface: #1b2128;
+  --surface-2: #222a33;
+  --text: #e6ebf0;
+  --muted: #9aa6b2;
+  --border: #333d48;
+  --accent: #7fb0ec;
+  --src-vypocet: #8dbbf2;
+  --src-vypocet-bg: #1d3350;
+  --src-praxe: #7fd39a;
+  --src-praxe-bg: #173826;
+  --src-vyrobce: #d0a4ee;
+  --src-vyrobce-bg: #37244a;
+  --src-vstup: #b3bcc6;
+  --src-vstup-bg: #2b333c;
+  --ok: #7fd39a;
+  --ok-bg: #173826;
+  --info: #8dbbf2;
+  --info-bg: #1d3350;
+  --na: #a7b1bb;
+  --na-bg: #2b333c;
+  --warn: #f2c16b;
+  --warn-bg: #3d2f12;
+  --err: #ff9b91;
+  --err-bg: #4a1f1b;
+  color-scheme: dark;
 }
 
 * {
@@ -599,13 +629,20 @@ select {
   --bound-bg: #eef4fc;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --series-1: #3987e5;
     --series-2: #d95926;
     --grid: #2c343d;
     --bound: #8dbbf2;
     --bound-bg: #18283c;
   }
+}
+:root[data-theme='dark'] {
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --grid: #2c343d;
+  --bound: #8dbbf2;
+  --bound-bg: #18283c;
 }
 h3 {
   font-size: 0.95rem;
@@ -1041,7 +1078,7 @@ td {
   --reality-bg: #fdeee2;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --calc: #8dbbf2;
     --calc-bg: #1d3350;
     --practice: #7fd39a;
@@ -1049,6 +1086,14 @@ td {
     --reality: #f4a46b;
     --reality-bg: #3f2716;
   }
+}
+:root[data-theme='dark'] {
+  --calc: #8dbbf2;
+  --calc-bg: #1d3350;
+  --practice: #7fd39a;
+  --practice-bg: #173826;
+  --reality: #f4a46b;
+  --reality-bg: #3f2716;
 }
 .tabs {
   overflow-x: auto;
@@ -1451,4 +1496,17 @@ select,
   display: inline-flex;
   align-items: center;
   min-height: 44px;
+}
+
+/* přepínače jazyka a barevného režimu v hlavičce */
+.prefs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+.prefs .segmented button {
+  min-height: 36px;
+  padding: 4px 10px;
 }

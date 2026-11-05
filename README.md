@@ -10,6 +10,14 @@ katalogovému základu výrobce a kontroluje bezpečnost (křehký lom, TSL podl
 Každé číslo je jednoho ze tří druhů a nikdy se nesměšují:
 **VÝPOČET** (fyzika) · **PRAXE** (pravidlo nebo odhad z praxe) · **ÚDAJ VÝROBCE**.
 
+Rozhraní je **česky i anglicky** (přepínač CZ / EN v hlavičce, včetně exportů PDF a Excel)
+a má **světlý i tmavý režim** (přepínač v hlavičce, výchozí podle systému).
+
+*English:* an engineering tool for ambient vaporizers of cryogenic liquids (O₂, N₂, Ar) –
+exact heat duty, an ideal lower size bound against a manufacturer's catalogue basis and
+safety checks (brittle fracture, TSL per AIGA 027). Switch the language with the CZ / EN
+toggle in the header.
+
 ## Stav
 
 | Fáze | Obsah | Stav |

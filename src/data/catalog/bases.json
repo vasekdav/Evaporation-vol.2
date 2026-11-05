@@ -14,6 +14,7 @@
       "wind_m_s": null,
       "hpLinedFactor": 0.8,
       "note": "Katalogové podmínky: 20 °C, 75 % RH, 15 bar(g), přiblížení výstupní teploty k okolí 10 °C, 8 h provozu. HP lined jednotky ×0,8 pro LIN/LOX/LAR. Tlak 15 bar je PŘEDPOKLÁDÁN jako přetlak (nepotvrzeno v katalogu): jen s 16,01325 bar a vychází UA₁ = 1,5229 (O₂) / 1,4503 (N₂) W/K na Nm³/h ze zadání. Při 15 bar a by UA₁ bylo o 0,10 % (O₂) / 0,16 % (N₂) nižší.",
+      "note_en": "Catalogue conditions: 20 °C, 75 % RH, 15 bar(g), outlet temperature approach to ambient 10 °C, 8 h of operation. HP lined units ×0.8 for LIN/LOX/LAR. The 15 bar pressure is ASSUMED to be gauge (not confirmed in the catalogue): only 16.01325 bar a reproduces UA₁ = 1.5229 (O₂) / 1.4503 (N₂) W/K per Nm³/h from the specification. At 15 bar a UA₁ would be 0.10 % (O₂) / 0.16 % (N₂) lower.",
       "source": "https://files.chartindustries.com/ThermafinSuperGapEurope.pdf",
       "modelsId": "chart-supergap-eu"
     },
@@ -30,6 +31,7 @@
       "wind_m_s": 1,
       "hpLinedFactor": null,
       "note": "Katalogové podmínky: +4 °C, 75 % RH, vzduch 1 m/s, 8 h. Tlak a přiblížení výstupní teploty nejsou v podkladu uvedeny – pro výpočet UA₁ je doplň z datasheetu výrobce.",
+      "note_en": "Catalogue conditions: +4 °C, 75 % RH, air 1 m/s, 8 h. Pressure and outlet temperature approach are not given in the datasheet – fill them in from the manufacturer datasheet to calculate UA₁.",
       "source": "https://www.genemco.com/cdn/shop/files/RCJF1518Btekomavaporizer.pdf",
       "modelsId": null
     }

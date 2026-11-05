@@ -2,6 +2,17 @@
 
 Verze se zobrazuje v reportu (fáze 4).
 
+## 0.7.0 – angličtina a tmavý režim
+
+- Přepínač jazyka CZ / EN v hlavičce: celé UI, zprávy kontrol, koncept, poptávka, postup
+  návrhu, rovnice, ověření i exporty (PDF, Excel, JSON) v obou jazycích. Výchozí jazyk podle
+  prohlížeče (čeština / slovenština → CZ, jinak EN), volba se pamatuje.
+- Čísla podle jazyka: desetinná čárka (CZ) / tečka (EN); vstupy přijímají oba zápisy
+  i „1,000.5“.
+- Přepínač světlého a tmavého režimu (výchozí podle systému, volba se pamatuje).
+- Test, že v angličtině nezůstane na žádné stránce český text; ověření kap. 9 projde i v EN.
+- Oprava: stejná zpráva kontroly se u pole s více vstupy (provoz h/den + 24/7) neopakuje.
+
 ## 0.6.0 – opravy po nezávislé odborné kontrole
 
 Pět nezávislých posuzovatelů (fyzika, praxe, bezpečnost, UX, software) – podrobně

@@ -3,6 +3,7 @@
  * Čistá funkce: stejné vstupy dávají stejný výsledek, bez vedlejších efektů.
  */
 import { findBasis, type CatalogBasis } from './catalog';
+import { tr } from './i18n';
 import { recommendConcept, type ConceptRecommendation } from './concept';
 import { runChecks, type CheckResult, type OverallStatus, STATUS_TEXT } from './checks';
 import { computeDuty, consumption, reheat, type Consumption, type DutyResult, type ReheatResult } from './duty';
@@ -77,7 +78,7 @@ export function evaluate(input: DesignInput, opts: EvaluateOptions = {}): Evalua
       base.sizing = sizeBranch(props, duty, basis, c.T_des_C, input.k);
     } catch (e) {
       if (!(e instanceof PropertyRangeError)) throw e;
-      base.sizing = { ok: false, reason: `Katalogový základ „${basis.name}“ je mimo rozsah dat: ${e.message}` };
+      base.sizing = { ok: false, reason: tr(`Katalogový základ „${basis.name}“ je mimo rozsah dat: ${e.message}`, `The catalogue basis “${basis.name}” is outside the data range: ${e.message}`) };
     }
     base.concept = recommendConcept({
       hoursPerDay: input.hoursPerDay,
@@ -103,7 +104,7 @@ export function evaluate(input: DesignInput, opts: EvaluateOptions = {}): Evalua
 function reheatOutcome(props: PropertyProvider, duty: DutyResult, T_actual_C: number | null): ReheatOutcome {
   if (T_actual_C === null) return null;
   if (!(T_actual_C < duty.T_out_C))
-    return { ok: false, reason: 'Očekávaná výstupní teplota bez dohřevu není nižší než návrhová – dohřev není potřeba.' };
+    return { ok: false, reason: tr('Očekávaná výstupní teplota bez dohřevu není nižší než návrhová – dohřev není potřeba.', 'The expected outlet temperature without heater is not below the design value – no trim heater needed.') };
   try {
     const r = reheat(props, duty.m_kg_s, duty.p_bar_a, T_actual_C, duty.T_out_C)!;
     return { ok: true, ...r };

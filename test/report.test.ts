@@ -4,7 +4,8 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import ExcelJS from 'exceljs';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { setLang } from '../src/core/i18n';
 import {
   buildInquiry,
   checkInquiry,
@@ -266,4 +267,31 @@ describe('poptávka – doplňky z nezávislé kontroly', () => {
     expect(w).toContain('K8 NEZADÁNO');
     expect(w).toContain('nenahrazují HAZOP / LOPA');
   });
+});
+
+describe('export v angličtině', () => {
+  afterEach(() => setLang('cs'));
+  it('PDF a Excel v EN: anglické texty, desetinná tečka, anglické názvy listů', async () => {
+    setLang('en');
+    const { report, inquiry } = models(defaultInput('O2'));
+    const wb = fillWorkbook(new ExcelJS.Workbook(), report, inquiry);
+    const back = new ExcelJS.Workbook();
+    await back.xlsx.load((await wb.xlsx.writeBuffer()) as ArrayBuffer);
+    expect(back.worksheets.map((w) => w.name)).toEqual(['Info', 'Inputs', 'Results', 'Checks', 'Concept', 'Enquiry']);
+    const bytes = await renderPdf(report);
+    expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe('%PDF-');
+    let text = '';
+    try {
+      const dir = mkdtempSync(join(tmpdir(), 'odp-'));
+      const f = join(dir, 'r.pdf');
+      writeFileSync(f, bytes);
+      text = execFileSync('pdftotext', ['-layout', f, '-'], { encoding: 'utf-8' });
+    } catch {
+      return;
+    }
+    expect(text).toContain('139.711');
+    expect(text).toContain('IDEAL LOWER BOUND');
+    expect(text).toContain('App version');
+    expect(text).not.toMatch(/[ěščřžůĚŠŘŽŮ]/);
+  }, 30000);
 });

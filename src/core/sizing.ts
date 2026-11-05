@@ -14,18 +14,31 @@
 import type { CatalogBasis } from './catalog';
 import { computeDuty, type DutyResult } from './duty';
 import { fmt } from './format';
+import { tr } from './i18n';
 import type { PropertyProvider } from './properties/types';
 import { toAbsBar, P_ATM_STD_BAR } from './units';
 
-export const SIZING_WARNINGS: readonly string[] = [
-  'Model předpokládá stejné U jako při katalogových podmínkách. V mrazu to neplatí: námraza pokryje celou plochu, ' +
-    'chybí latentní teplo vlhkosti (při 20 °C a 75 % RH je ve vzduchu ~11 g vody/kg, při −15 °C ~1 g/kg) ' +
-    'a studený vzduch se drží u jednotky. Tyto vlivy převládají (studený suchý vzduch má jen o málo lepší přirozenou ' +
-    'konvekci), výsledek je proto OPTIMISTICKÝ.',
-  'LMTD s konstantním c_p nadhodnocuje UA_II v potřebě i v katalogovém UA₁; v poměru N_eq se chyba jen částečně ruší. ' +
-    'Pod ~14 bar a vychází N_eq o 1,5–4,5 % NÍŽ (optimisticky), při 30–40 bar a o 6–14 % výš (nezávislá kontrola integrací přes h(T)).',
-  'UA₁ předpokládá nasycenou kapalinu při katalogovém tlaku (konzervativní volba – kapalina na bodu varu by dala UA₁ o ~10 % vyšší).',
-];
+/** Povinná upozornění k ideální dolní mezi (v aktuálním jazyce). */
+export function sizingWarnings(): string[] {
+  return [
+    tr(
+      'Model předpokládá stejné U jako při katalogových podmínkách. V mrazu to neplatí: námraza pokryje celou plochu, chybí latentní teplo vlhkosti (při 20 °C a 75 % RH je ve vzduchu ~11 g vody/kg, při −15 °C ~1 g/kg) a studený vzduch se drží u jednotky. Tyto vlivy převládají (studený suchý vzduch má jen o málo lepší přirozenou konvekci), výsledek je proto OPTIMISTICKÝ.',
+      'The model assumes the same U as at catalogue conditions. In frost this does not hold: frost covers the whole surface, the latent heat of moisture is missing (at 20 °C and 75 % RH the air holds ~11 g water/kg, at −15 °C ~1 g/kg) and cold air lingers around the unit. These effects dominate (cold dry air has only slightly better natural convection), so the result is OPTIMISTIC.',
+    ),
+    tr(
+      'LMTD s konstantním c_p nadhodnocuje UA_II v potřebě i v katalogovém UA₁; v poměru N_eq se chyba jen částečně ruší. Pod ~14 bar a vychází N_eq o 1,5–4,5 % NÍŽ (optimisticky), při 30–40 bar a o 6–14 % výš (nezávislá kontrola integrací přes h(T)).',
+      'LMTD with constant c_p overestimates UA_II both in the requirement and in the catalogue UA₁; in the N_eq ratio the error only partly cancels. Below ~14 bar a N_eq comes out 1.5–4.5 % LOWER (optimistic), at 30–40 bar a 6–14 % higher (independent check by integration over h(T)).',
+    ),
+    tr(
+      'UA₁ předpokládá nasycenou kapalinu při katalogovém tlaku (konzervativní volba – kapalina na bodu varu by dala UA₁ o ~10 % vyšší).',
+      'UA₁ assumes saturated liquid at the catalogue pressure (a conservative choice – liquid at the normal boiling point would give a ~10 % higher UA₁).',
+    ),
+  ];
+}
+/** Kompatibilita: upozornění v aktuálním jazyce. */
+export const SIZING_WARNINGS: readonly string[] = new Proxy([] as string[], {
+  get: (_t, k) => (sizingWarnings() as unknown as Record<string | symbol, unknown>)[k],
+});
 
 export type UAResult =
   | {
@@ -50,12 +63,14 @@ export function requiredUA(duty: Pick<DutyResult, 'Q_I_kW' | 'Q_II_kW' | 'T_sat_
       ok: false,
       code: 'OUTLET_NOT_REACHABLE',
       reason:
-        `Při teplotě vzduchu ${fmt(T_des_C, 1)} °C atmosférický odpařovač výstupní teploty ` +
-        `${fmt(duty.T_out_C, 1)} °C nedosáhne (ΔT_out = ${fmt(dT_out, 1)} K ≤ 0). Posouzení velikosti nelze.`,
+        tr(
+          `Při teplotě vzduchu ${fmt(T_des_C, 1)} °C atmosférický odpařovač výstupní teploty ${fmt(duty.T_out_C, 1)} °C nedosáhne (ΔT_out = ${fmt(dT_out, 1)} K ≤ 0). Posouzení velikosti nelze.`,
+          `At an air temperature of ${fmt(T_des_C, 1)} °C an ambient vaporizer cannot reach the outlet temperature ${fmt(duty.T_out_C, 1)} °C (ΔT_out = ${fmt(dT_out, 1)} K ≤ 0). Sizing assessment not possible.`,
+        ),
     };
   }
   if (!(dT_I > dT_out)) {
-    return { ok: false, code: 'BELOW_SAT', reason: 'Výstupní teplota musí být nad teplotou nasycení.' };
+    return { ok: false, code: 'BELOW_SAT', reason: tr('Výstupní teplota musí být nad teplotou nasycení.', 'The outlet temperature must be above the saturation temperature.') };
   }
   const LMTD = (dT_I - dT_out) / Math.log(dT_I / dT_out);
   const UA_I = (duty.Q_I_kW * 1000) / dT_I;
@@ -83,12 +98,15 @@ export type UA1Result =
  */
 export function catalogUA1(props: PropertyProvider, basis: CatalogBasis): UA1Result {
   if (basis.pressure === null || basis.approach_K === null) {
-    const missing = [basis.pressure === null ? 'tlak' : null, basis.approach_K === null ? 'přiblížení' : null]
+    const missing = [basis.pressure === null ? tr('tlak', 'pressure') : null, basis.approach_K === null ? tr('přiblížení', 'approach') : null]
       .filter(Boolean)
-      .join(' a ');
+      .join(tr(' a ', ' and '));
     return {
       ok: false,
-      reason: `Katalogový základ „${basis.name}“ nemá uvedený ${missing}. Doplň je z podkladu výrobce, jinak UA₁ nelze spočítat.`,
+      reason: tr(
+        `Katalogový základ „${basis.name}“ nemá uvedený ${missing}. Doplň je z podkladu výrobce, jinak UA₁ nelze spočítat.`,
+        `The catalogue basis “${basis.name}” has no ${missing} stated. Fill them in from the manufacturer's documentation, otherwise UA₁ cannot be calculated.`,
+      ),
     };
   }
   const p_bar_a = toAbsBar(basis.pressure, P_ATM_STD_BAR);
@@ -135,11 +153,13 @@ export function sizeBranch(
   const warnings =
     basis.pressureVerified === false && basis.pressure !== null
       ? [
-          ...SIZING_WARNINGS,
-          `Katalogový tlak základu „${basis.name}“ (${fmt(basis.pressure.value, 2)} ${basis.pressure.kind === 'gauge' ? 'barg' : 'bar a'}) ` +
-            'není ověřen v podkladu výrobce. Na N_eq má vliv jen řádově 0,1 %, přesto ho ověř v katalogu.',
+          ...sizingWarnings(),
+          tr(
+            `Katalogový tlak základu „${basis.name}“ (${fmt(basis.pressure.value, 2)} ${basis.pressure.kind === 'gauge' ? 'barg' : 'bar a'}) není ověřen v podkladu výrobce. Na N_eq má vliv jen řádově 0,1 %, přesto ho ověř v katalogu.`,
+            `The catalogue pressure of the basis “${basis.name}” (${fmt(basis.pressure.value, 2)} ${basis.pressure.kind === 'gauge' ? 'barg' : 'bar a'}) is not verified in the manufacturer's documentation. Its effect on N_eq is only ~0.1 %, but verify it in the catalogue.`,
+          ),
         ]
-      : SIZING_WARNINGS;
+      : sizingWarnings();
   return {
     ok: true,
     ua,
@@ -183,20 +203,31 @@ export function assessExisting(
     return {
       ...base,
       verdict: 'BELOW_FLOW',
-      text: `NEVYHOVÍ: katalogová kapacita ${fmt(capacity_Nm3_h, 0)} Nm³/h je pod návrhovým průtokem ${fmt(Vn_Nm3_h, 0)} Nm³/h.`,
+      text: tr(
+        `NEVYHOVÍ: katalogová kapacita ${fmt(capacity_Nm3_h, 0)} Nm³/h je pod návrhovým průtokem ${fmt(Vn_Nm3_h, 0)} Nm³/h.`,
+        `NOT ADEQUATE: catalogue capacity ${fmt(capacity_Nm3_h, 0)} Nm³/h is below the design flow ${fmt(Vn_Nm3_h, 0)} Nm³/h.`,
+      ),
     };
   if (capacity_Nm3_h < sizing.N_eq_Nm3_h * sizing.k)
     return {
       ...base,
       verdict: 'BELOW_IDEAL',
       text:
-        `NEVYHOVÍ ani v ideálním modelu: kapacita ${fmt(capacity_Nm3_h, 0)} Nm³/h je pod ideální dolní mezí ` +
-        `N_eq·k = ${fmt(sizing.N_eq_Nm3_h * sizing.k, 0)} Nm³/h při ${fmt(sizing.ua.T_des_C, 1)} °C.`,
+        tr(
+          `NEVYHOVÍ ani v ideálním modelu: kapacita ${fmt(capacity_Nm3_h, 0)} Nm³/h je pod ideální dolní mezí N_eq·k = ${fmt(sizing.N_eq_Nm3_h * sizing.k, 0)} Nm³/h při ${fmt(sizing.ua.T_des_C, 1)} °C.`,
+          `NOT ADEQUATE even in the ideal model: capacity ${fmt(capacity_Nm3_h, 0)} Nm³/h is below the ideal lower bound N_eq·k = ${fmt(sizing.N_eq_Nm3_h * sizing.k, 0)} Nm³/h at ${fmt(sizing.ua.T_des_C, 1)} °C.`,
+        ),
     };
   const common =
-    `Kapacita ${fmt(capacity_Nm3_h, 0)} Nm³/h je ${fmt(reserveOverMin * 100, 0)} % nad nejmenší kapacitou větve ` +
-    `(${fmt(ratioToFlow, 2)}× průtoku). To NEZNAMENÁ, že vyhoví – ideální dolní mez je optimistická; potvrdí přepočet výrobce.`;
+    tr(
+      `Kapacita ${fmt(capacity_Nm3_h, 0)} Nm³/h je ${fmt(reserveOverMin * 100, 0)} % nad nejmenší kapacitou větve (${fmt(ratioToFlow, 2)}× průtoku). To NEZNAMENÁ, že vyhoví – ideální dolní mez je optimistická; potvrdí přepočet výrobce.`,
+      `Capacity ${fmt(capacity_Nm3_h, 0)} Nm³/h is ${fmt(reserveOverMin * 100, 0)} % above the minimum branch capacity (${fmt(ratioToFlow, 2)}× the flow). This does NOT mean it is adequate – the ideal lower bound is optimistic; the manufacturer's re-rating confirms it.`,
+    );
   return ratioToFlow < practiceLow
-    ? { ...base, verdict: 'ABOVE_IDEAL_BELOW_PRACTICE', text: `${common} Pod orientační rezervou praxe ${fmt(practiceLow, 1)}× průtoku.` }
+    ? {
+        ...base,
+        verdict: 'ABOVE_IDEAL_BELOW_PRACTICE',
+        text: `${common} ${tr(`Pod orientační rezervou praxe ${fmt(practiceLow, 1)}× průtoku.`, `Below the rough practical margin of ${fmt(practiceLow, 1)}× the flow.`)}`,
+      }
     : { ...base, verdict: 'ABOVE_PRACTICE', text: common };
 }

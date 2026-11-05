@@ -3,7 +3,8 @@
  * až při exportu (dynamický import), aby nezatěžovala start aplikace.
  */
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
-import { SOURCE_SHORT, type ReportModel, type ReportSection, type RowSource } from './model';
+import { tr } from '../core/i18n';
+import { sourceShort, type ReportModel, type ReportSection, type RowSource } from './model';
 
 const SRC_COLOR: Record<RowSource, string> = {
   VYPOCET: '#1f5fa8',
@@ -29,6 +30,10 @@ const LEVEL_COLOR: Record<string, string> = {
   NEHODNOCENO: '#59636e',
   POZOR: '#9a6200',
   CHYBA: '#b42318',
+  'NOT SET': '#59636e',
+  'NOT EVALUATED': '#59636e',
+  WARNING: '#9a6200',
+  ERROR: '#b42318',
 };
 
 function section(s: ReportSection): Content[] {
@@ -42,16 +47,16 @@ function section(s: ReportSection): Content[] {
         widths: ['*', 'auto', 'auto', 'auto'],
         body: [
           [
-            { text: 'Veličina', style: 'th' },
-            { text: 'Hodnota', style: 'th', alignment: 'right' },
-            { text: 'Jednotka', style: 'th' },
-            { text: 'Původ', style: 'th' },
+            { text: tr('Veličina', 'Quantity'), style: 'th' },
+            { text: tr('Hodnota', 'Value'), style: 'th', alignment: 'right' },
+            { text: tr('Jednotka', 'Unit'), style: 'th' },
+            { text: tr('Původ', 'Source'), style: 'th' },
           ],
           ...s.rows.map((r) => [
             { text: pdfText(r.label) },
             { text: pdfText(r.text), alignment: r.num !== undefined ? 'right' : 'left' },
             { text: pdfText(r.unit) },
-            { text: SOURCE_SHORT[r.source], color: SRC_COLOR[r.source], fontSize: 7, bold: true },
+            { text: sourceShort(r.source), color: SRC_COLOR[r.source], fontSize: 7, bold: true },
           ]),
         ],
       },
@@ -83,7 +88,7 @@ function section(s: ReportSection): Content[] {
 /** Čistá funkce: model reportu → definice dokumentu pdfmake. */
 export function buildPdfDefinition(m: ReportModel): TDocumentDefinitions {
   return {
-    info: { title: m.title, creator: `Odpařovač ${m.appVersion}`, subject: m.subtitle },
+    info: { title: m.title, creator: `${tr('Odpařovač', 'Vaporizer')} ${m.appVersion}`, subject: m.subtitle },
     pageSize: 'A4',
     pageMargins: [40, 50, 40, 50],
     pageBreakBefore: (node, q) => {
@@ -96,12 +101,12 @@ export function buildPdfDefinition(m: ReportModel): TDocumentDefinitions {
     header: (page: number, count: number) => ({
       columns: [
         { text: m.title, fontSize: 7, color: '#59636e' },
-        { text: `strana ${page} / ${count}`, alignment: 'right', fontSize: 7, color: '#59636e' },
+        { text: `${tr('strana', 'page')} ${page} / ${count}`, alignment: 'right', fontSize: 7, color: '#59636e' },
       ],
       margin: [40, 20, 40, 0],
     }),
     footer: () => ({
-      text: `Verze aplikace ${m.appVersion} · CoolProp ${m.coolpropVersion} · ${m.createdText} · ${m.disclaimer}`,
+      text: `${tr('Verze aplikace', 'App version')} ${m.appVersion} · CoolProp ${m.coolpropVersion} · ${m.createdText} · ${m.disclaimer}`,
       fontSize: 6.5,
       color: '#59636e',
       margin: [40, 10, 40, 0],
@@ -119,14 +124,17 @@ export function buildPdfDefinition(m: ReportModel): TDocumentDefinitions {
       },
       {
         columns: [
-          { text: [{ text: 'Stav výsledku: ', bold: true }, m.status] },
-          { text: [{ text: 'Datum: ', bold: true }, m.createdText], alignment: 'right' },
+          { text: [{ text: tr('Stav výsledku: ', 'Result status: '), bold: true }, m.status] },
+          { text: [{ text: tr('Datum: ', 'Date: '), bold: true }, m.createdText], alignment: 'right' },
         ],
         margin: [0, 0, 0, 2],
       },
-      { text: [{ text: 'Verze aplikace: ', bold: true }, `${m.appVersion} · vlastnosti látek CoolProp ${m.coolpropVersion}`], margin: [0, 0, 0, 8] },
+      { text: [{ text: tr('Verze aplikace: ', 'App version: '), bold: true }, `${m.appVersion} · ${tr('vlastnosti látek', 'fluid properties')} CoolProp ${m.coolpropVersion}`], margin: [0, 0, 0, 8] },
       {
-        text: 'Původ hodnot: VÝPOČET – fyzika · PRAXE – pravidlo nebo odhad z praxe · VÝROBCE – údaj výrobce (ilustrativní) · VSTUP – zadáno uživatelem · DOPLNIT – nutno doplnit',
+        text: tr(
+          'Původ hodnot: VÝPOČET – fyzika · PRAXE – pravidlo nebo odhad z praxe · VÝROBCE – údaj výrobce (ilustrativní) · VSTUP – zadáno uživatelem · DOPLNIT – nutno doplnit',
+          'Source of values: CALC – physics · PRACTICE – rule or estimate from practice · MANUF. – manufacturer data (illustrative) · INPUT – entered by the user · TO FILL – to be filled in',
+        ),
         fontSize: 7,
         color: '#59636e',
         margin: [0, 0, 0, 6],

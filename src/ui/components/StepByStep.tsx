@@ -3,6 +3,7 @@ import type { Evaluation } from '../../core/evaluate';
 import { FLUID_POLICY } from '../../core/fluids';
 import { getProvider } from '../../core/properties';
 import { toNm3h } from '../../core/units';
+import { tr } from '../../core/i18n';
 import { Qty } from './Qty';
 
 interface Step {
@@ -33,15 +34,15 @@ export function StepByStep({ ev }: { ev: Evaluation }) {
   const steps: Step[] = [
     {
       n: 1,
-      title: 'Hustota za normálních podmínek',
-      formula: 'ρn = ρ(látka; 0 °C; 1,01325 bar) – reálný plyn ze stavové rovnice',
+      title: tr('Hustota za normálních podmínek', 'Density at normal conditions'),
+      formula: tr('ρn = ρ(látka; 0 °C; 1,01325 bar) – reálný plyn ze stavové rovnice', 'ρn = ρ(fluid; 0 °C; 1.01325 bar) – real gas from the equation of state'),
       result: <Qty v={d.rho_n_kg_Nm3} unit="kg/Nm³" src="VYPOCET" d={6} />,
       note: `${policy.formula}: ${meta.eos ?? ''}, CoolProp ${meta.coolprop_version}`,
     },
     {
       n: 2,
-      title: 'Absolutní tlak',
-      formula: inp.pressure.kind === 'gauge' ? 'p = p_g + p_atm' : 'p = zadaný absolutní tlak',
+      title: tr('Absolutní tlak', 'Absolute pressure'),
+      formula: inp.pressure.kind === 'gauge' ? 'p = p_g + p_atm' : tr('p = zadaný absolutní tlak', 'p = entered absolute pressure'),
       subst:
         inp.pressure.kind === 'gauge' ? (
           <>
@@ -49,11 +50,11 @@ export function StepByStep({ ev }: { ev: Evaluation }) {
           </>
         ) : undefined,
       result: <Qty v={d.p_bar_a} unit="bar a" src="VYPOCET" d={5} />,
-      note: 'Tlaková ztráta zanedbána: 0,5 bar tlakové ztráty by zvýšilo výkon o +0,05 až +0,15 % podle tlaku a T_out.',
+      note: tr('Tlaková ztráta zanedbána: 0,5 bar tlakové ztráty by zvýšilo výkon o +0,05 až +0,15 % podle tlaku a T_out.', 'Pressure drop neglected: a 0.5 bar pressure drop would raise the duty by +0.05 to +0.15 % depending on pressure and T_out.'),
     },
     {
       n: 3,
-      title: 'Hmotnostní průtok',
+      title: tr('Hmotnostní průtok', 'Mass flow'),
       formula: 'ṁ = V̇n · ρn / 3600',
       subst: (
         <>
@@ -68,7 +69,7 @@ export function StepByStep({ ev }: { ev: Evaluation }) {
     },
     {
       n: 4,
-      title: 'Nasycení při provozním tlaku',
+      title: tr('Nasycení při provozním tlaku', 'Saturation at operating pressure'),
       formula: 'T_sat(p), h_l,sat(p), h_v,sat(p), r = h_v,sat − h_l,sat',
       result: (
         <span className="stack">
@@ -78,39 +79,41 @@ export function StepByStep({ ev }: { ev: Evaluation }) {
           <span>r = <Qty v={d.r_kJ_kg} unit={kj} src="VYPOCET" d={3} /></span>
         </span>
       ),
-      note: 'Referenční stav: h = 0 pro nasycenou kapalinu při 1,01325 bar (na výsledek nemá vliv).',
+      note: tr('Referenční stav: h = 0 pro nasycenou kapalinu při 1,01325 bar (na výsledek nemá vliv).', 'Reference state: h = 0 for saturated liquid at 1.01325 bar (no effect on the result).'),
     },
     {
       n: 5,
-      title: 'Entalpie kapaliny na vstupu',
-      formula: sub ? 'h_in = h_l(p, T_in) – podchlazená / stlačená kapalina' : 'h_in = h_l,sat(p) – nasycená kapalina',
+      title: tr('Entalpie kapaliny na vstupu', 'Liquid enthalpy at inlet'),
+      formula: sub
+        ? tr('h_in = h_l(p, T_in) – podchlazená / stlačená kapalina', 'h_in = h_l(p, T_in) – subcooled / compressed liquid')
+        : tr('h_in = h_l,sat(p) – nasycená kapalina', 'h_in = h_l,sat(p) – saturated liquid'),
       subst: sub ? <>T_in = <Qty v={d.T_in_C} unit="°C" src="VSTUP" d={2} /></> : undefined,
       result: <Qty v={d.h_in_kJ_kg} unit={kj} src="VYPOCET" d={3} />,
     },
     {
       n: 6,
-      title: 'Entalpie plynu na výstupu',
+      title: tr('Entalpie plynu na výstupu', 'Gas enthalpy at outlet'),
       formula: 'h_out = h(p, T_out)',
       subst: <>T_out = <Qty v={d.T_out_C} unit="°C" src="VSTUP" d={2} /></>,
       result: <Qty v={d.h_out_kJ_kg} unit={kj} src="VYPOCET" d={3} />,
     },
     {
       n: 7,
-      title: 'Rozklad měrného tepla',
+      title: tr('Rozklad měrného tepla', 'Specific heat breakdown'),
       formula: 'q₁ = h_l,sat − h_in;  q₂ = r;  q₃ = h_out − h_v,sat;  q = q₁ + q₂ + q₃',
       result: (
         <span className="stack">
-          <span>q₁ ohřev kapaliny = <Qty v={d.q1_kJ_kg} unit={kj} src="VYPOCET" d={3} /></span>
-          <span>q₂ výparné teplo = <Qty v={d.q2_kJ_kg} unit={kj} src="VYPOCET" d={3} /></span>
-          <span>q₃ přehřátí = <Qty v={d.q3_kJ_kg} unit={kj} src="VYPOCET" d={3} /></span>
+          <span>q₁ {tr('ohřev kapaliny', 'liquid warming')} = <Qty v={d.q1_kJ_kg} unit={kj} src="VYPOCET" d={3} /></span>
+          <span>q₂ {tr('výparné teplo', 'latent heat')} = <Qty v={d.q2_kJ_kg} unit={kj} src="VYPOCET" d={3} /></span>
+          <span>q₃ {tr('přehřátí', 'superheating')} = <Qty v={d.q3_kJ_kg} unit={kj} src="VYPOCET" d={3} /></span>
           <span>q = <Qty v={d.q_kJ_kg} unit={kj} src="VYPOCET" d={3} /></span>
         </span>
       ),
     },
     {
       n: 8,
-      title: 'Výkon a zóny přestupu tepla',
-      formula: 'Q = ṁ·q;  Q_I = ṁ·(q₁ + q₂) zóna varu;  Q_II = ṁ·q₃ zóna přehřátí',
+      title: tr('Výkon a zóny přestupu tepla', 'Duty and heat transfer zones'),
+      formula: tr('Q = ṁ·q;  Q_I = ṁ·(q₁ + q₂) zóna varu;  Q_II = ṁ·q₃ zóna přehřátí', 'Q = ṁ·q;  Q_I = ṁ·(q₁ + q₂) boiling zone;  Q_II = ṁ·q₃ superheating zone'),
       result: (
         <span className="stack">
           <span>Q = <Qty v={d.Q_kW} unit="kW" src="VYPOCET" d={3} /></span>
@@ -118,11 +121,11 @@ export function StepByStep({ ev }: { ev: Evaluation }) {
           <span>Q_II = <Qty v={d.Q_II_kW} unit="kW" src="VYPOCET" d={3} /></span>
         </span>
       ),
-      note: 'Ustálený otevřený systém, bez práce; změny kinetické a potenciální energie zanedbány.',
+      note: tr('Ustálený otevřený systém, bez práce; změny kinetické a potenciální energie zanedbány.', 'Steady open system, no work; kinetic and potential energy changes neglected.'),
     },
     {
       n: 9,
-      title: 'Střední měrné teplo (informativně)',
+      title: tr('Střední měrné teplo (informativně)', 'Mean specific heat (informative)'),
       formula: 'c_p,l = q₁ / (T_sat − T_in);  c_p,g = q₃ / (T_out − T_sat)',
       result: (
         <span className="stack">
@@ -130,7 +133,7 @@ export function StepByStep({ ev }: { ev: Evaluation }) {
             c_p,l ={' '}
             {d.cp_l_mean_kJ_kgK === null ? (
               <span className="muted" data-narrative="">
-                neuvádí se (|T_sat − T_in| &lt; 1 K)
+                {tr('neuvádí se (|T_sat − T_in| < 1 K)', 'not given (|T_sat − T_in| < 1 K)')}
               </span>
             ) : (
               <Qty v={d.cp_l_mean_kJ_kgK} unit="kJ/(kg·K)" src="VYPOCET" d={3} />
@@ -144,13 +147,13 @@ export function StepByStep({ ev }: { ev: Evaluation }) {
 
   return (
     <section className="card" aria-labelledby="steps-h">
-      <h2 id="steps-h">Postup výpočtu krok za krokem</h2>
+      <h2 id="steps-h">{tr('Postup výpočtu krok za krokem', 'Calculation step by step')}</h2>
       <ol className="steps">
         {steps.map((s) => (
           <li key={s.n} className="step">
             <div className="step-title">{s.title}</div>
             <F>{s.formula}</F>
-            {s.subst ? <div className="step-subst">dosazení: {s.subst}</div> : null}
+            {s.subst ? <div className="step-subst">{tr('dosazení', 'substitution')}: {s.subst}</div> : null}
             <div className="step-result">{s.result}</div>
             {s.note ? (
               <div className="step-note" data-narrative="">

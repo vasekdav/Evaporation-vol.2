@@ -6,6 +6,7 @@
  * dostupnost, TSL a požadovaná rezerva. Prostor se zadává až v poptávce; zde jen „co hlídat“.
  */
 import { fmt } from './format';
+import { getLang, tr } from './i18n';
 import type { Availability } from './input';
 
 export type ConceptId = 'SINGLE' | 'SWITCHED' | 'ATM_HEATER' | 'FORCED_DRAFT' | 'WATER_BATH' | 'N_PLUS_1';
@@ -21,7 +22,7 @@ export interface ConceptInfo {
   watch: readonly string[];
 }
 
-export const CONCEPTS: Readonly<Record<ConceptId, ConceptInfo>> = {
+const CONCEPTS_CS: Readonly<Record<ConceptId, ConceptInfo>> = {
   SINGLE: {
     id: 'SINGLE',
     name: 'Jedna větev',
@@ -84,7 +85,7 @@ export const CONCEPTS: Readonly<Record<ConceptId, ConceptInfo>> = {
 };
 
 /** Obecná pravidla návrhu (kap. 6.2), zobrazují se vždy. */
-export const DESIGN_RULES: readonly string[] = [
+const DESIGN_RULES_CS: readonly string[] = [
   'Jmenovitá kapacita jedné provozní větve nikdy pod návrhovým průtokem ani pod ideální dolní mezí.',
   'Nad ideální dolní mezí je potřeba rezerva na námrazu a chybějící latentní teplo. Orientačně 1,2–1,5× průtoku, ' +
     'ale jen při přiblížení výstupní teploty k okolí ≈ 10 K. Je to odhad praxe, ne norma, a rozhoduje přepočet výrobce. ' +
@@ -95,6 +96,97 @@ export const DESIGN_RULES: readonly string[] = [
   'Paralelní větve se při uvedení do provozu vyvažují (AIGA 027 čl. 8.10).',
   'Výrobci mají různé katalogové základy. Modely různých výrobců nesrovnávej podle katalogových Nm³/h bez přepočtu.',
 ];
+
+const CONCEPTS_EN: Readonly<Record<ConceptId, ConceptInfo>> = {
+  SINGLE: {
+    id: 'SINGLE',
+    name: 'Single branch',
+    pros: ['Simplest and cheapest solution', 'No switching valves'],
+    risks: [
+      'Below 0 °C the branch does not defrost even when idle – frost accumulates over the whole frost period',
+      'No backup: defrosting or a failure interrupts supply',
+    ],
+    watch: [
+      'The manufacturer must size for the frost period too (guarantee at T_min at the end of the cycle)',
+      'Outlet temperature at the end of the shift in frost (T_out log, KPI)',
+    ],
+  },
+  SWITCHED: {
+    id: 'SWITCHED',
+    name: 'Two branches with automatic switching',
+    pros: ['The idle branch defrosts while the other one runs', 'Suitable for 24/7 operation'],
+    risks: [
+      'Switching failure (valve, control) lets cold gas through',
+      'Below 0 °C the idle branch defrosts only slowly',
+    ],
+    watch: [
+      'Timer 4–8 h + switchover on low outlet temperature; switching does NOT replace TSL',
+      'Functional tests of switching and the KPI “switching failures”',
+      'Balancing of parallel branches at commissioning (AIGA 027 cl. 8.10)',
+    ],
+  },
+  ATM_HEATER: {
+    id: 'ATM_HEATER',
+    name: 'Ambient vaporizer + trim heater',
+    pros: ['Reaches the outlet temperature even in frost', 'Smaller ambient part than with a small approach'],
+    risks: ['Energy for the trim heater', 'Heater failure = cold gas into the piping'],
+    watch: [
+      'Section between vaporizer and trim heater in stainless steel',
+      'TSL DOWNSTREAM of the trim heater',
+      'Heater failure must shut off the supply (fail-close)',
+    ],
+  },
+  FORCED_DRAFT: {
+    id: 'FORCED_DRAFT',
+    name: 'Forced draft (fans)',
+    pros: ['Higher heat transfer, smaller footprint', 'Cold air does not stay around the unit'],
+    risks: ['Depends on electrical power', 'Noise', 'Outlet temperature still limited by the air temperature'],
+    watch: ['Fan failure must lead to a safe state (TSL)', 'Frost on the fins and defrosting'],
+  },
+  WATER_BATH: {
+    id: 'WATER_BATH',
+    name: 'Water bath / high-thermal-inertia heater (HTB)',
+    pros: ['Independent of the air temperature', 'High thermal inertia damps peaks'],
+    risks: ['Operating cost of heat (steam, electricity, gas)', 'Bath freezing on loss of heating'],
+    watch: ['Monitoring of bath temperature and level', 'Loss of heating must lead to a safe state (TSL)'],
+  },
+  N_PLUS_1: {
+    id: 'N_PLUS_1',
+    name: 'N+1 (standby branch)',
+    pros: ['Supply continues during defrosting, maintenance or failure of one branch'],
+    risks: ['Higher investment and space', 'The standby branch must be ready (valve positions)'],
+    watch: ['Balancing of parallel branches (AIGA 027 cl. 8.10)', 'Regular switchover to the standby branch'],
+  },
+};
+
+const DESIGN_RULES_EN: readonly string[] = [
+  'The rated capacity of one operating branch is never below the design flow nor below the ideal lower bound.',
+  'Above the ideal lower bound a margin for frost and missing latent heat is needed. Roughly 1.2–1.5× the flow, but only at an ' +
+    'outlet temperature approach to ambient of ≈ 10 K. This is a practical estimate, not a standard; the manufacturer’s re-rating decides. ' +
+    'With a smaller approach considerably more is usually needed.',
+  'Size at the minimum ambient temperature of the site, at the end of the operating cycle (AIGA 027 §5).',
+  'Temperature hierarchy: piping limit < TSL < design T_out, e.g. −30 / −28 / −20 °C. TSL is never lowered because of frequent trips.',
+  'AIGA 027 cl. 8.8 does not recommend low-thermal-inertia (LTB) vaporizers for new installations.',
+  'Parallel branches are balanced at commissioning (AIGA 027 cl. 8.10).',
+  'Manufacturers use different catalogue bases. Do not compare models of different manufacturers by catalogue Nm³/h without re-rating.',
+];
+
+/** Koncepty v aktuálním jazyce. */
+export function concepts(): Readonly<Record<ConceptId, ConceptInfo>> {
+  return getLang() === 'en' ? CONCEPTS_EN : CONCEPTS_CS;
+}
+/** Pravidla návrhu v aktuálním jazyce. */
+export function designRules(): readonly string[] {
+  return getLang() === 'en' ? DESIGN_RULES_EN : DESIGN_RULES_CS;
+}
+/** Kompatibilita (čeština). */
+export const CONCEPTS = CONCEPTS_CS;
+export const DESIGN_RULES = DESIGN_RULES_CS;
+
+/** Popisek role v aktuálním jazyce. */
+export function roleLabel(r: ConceptRole): string {
+  return r === 'doporučeno' ? tr('doporučeno', 'recommended') : r === 'doplněk' ? tr('doplněk', 'add-on') : tr('zvážit', 'consider');
+}
 
 /** Přiblížení, pro které platí orientační rezerva 1,2–1,5× (kap. 6.2) [K]. */
 export const PRACTICE_APPROACH_K = 10;
@@ -159,44 +251,53 @@ export function recommendConcept(c: ConceptInput): ConceptRecommendation {
       'SWITCHED',
       'doporučeno',
       c.continuous24_7
-        ? 'Provoz 24/7: jedna větev nemá čas odtát.'
-        : `Provoz ${c.hoursPerDay} h/den (> 8 h): na odtávání nezbývá dost času.`,
+        ? tr('Provoz 24/7: jedna větev nemá čas odtát.', '24/7 operation: a single branch has no time to defrost.')
+        : tr(`Provoz ${c.hoursPerDay} h/den (> 8 h): na odtávání nezbývá dost času.`, `Operation ${c.hoursPerDay} h/day (> 8 h): not enough time left for defrosting.`),
     );
   } else {
-    add('SINGLE', 'doporučeno', `Provoz ${c.hoursPerDay} h/den (≤ 8 h) s odstávkou: větev může v odstávce odtát.`);
+    add('SINGLE', 'doporučeno', tr(`Provoz ${c.hoursPerDay} h/den (≤ 8 h) s odstávkou: větev může v odstávce odtát.`, `Operation ${c.hoursPerDay} h/day (≤ 8 h) with shutdown: the branch can defrost while idle.`));
     if (frost) {
       add(
         'SINGLE',
         'doporučeno',
-        `Teplota pro posouzení ${fmt1(c.T_des_C)} °C je pod 0 °C: větev v mrazu neodtává ani v odstávce – jedna větev jen tehdy, když ji výrobce dimenzuje i na mrazové období.`,
+        tr(
+          `Teplota pro posouzení ${fmt1(c.T_des_C)} °C je pod 0 °C: větev v mrazu neodtává ani v odstávce – jedna větev jen tehdy, když ji výrobce dimenzuje i na mrazové období.`,
+          `Design air temperature ${fmt1(c.T_des_C)} °C is below 0 °C: in frost the branch does not defrost even when idle – a single branch only if the manufacturer sizes it for the frost period too.`,
+        ),
       );
       if (c.frostWeeks !== null && c.frostWeeks > 0)
-        add('SWITCHED', 'zvážit', `Mrazové období ${c.frostWeeks} týdnů: námraza se kumuluje; přepínané větve odtávají střídavě.`);
+        add('SWITCHED', 'zvážit', tr(`Mrazové období ${c.frostWeeks} týdnů: námraza se kumuluje; přepínané větve odtávají střídavě.`, `Frost period ${c.frostWeeks} weeks: frost accumulates; switched branches defrost alternately.`));
       else if (c.frostWeeks === null)
-        add('SWITCHED', 'zvážit', 'Délka mrazového období není zadaná – při delším mrazu se námraza kumuluje; zvaž přepínané větve.');
+        add('SWITCHED', 'zvážit', tr('Délka mrazového období není zadaná – při delším mrazu se námraza kumuluje; zvaž přepínané větve.', 'Length of the frost period not set – in a longer frost the ice accumulates; consider switched branches.'));
     }
   }
   if (longRun && frost) {
-    const why =
-      'Provoz bez odstávek v mrazu: odstavená větev pod 0 °C prakticky neodtává, takže přepínání kapacitu neobnoví.';
-    add('ATM_HEATER', 'zvážit', `${why} Dohřev nebo třetí větev; rozhodne přepočet výrobce na mrazové období.`);
-    add('FORCED_DRAFT', 'zvážit', `${why} Nucený tah zlepší přestup tepla.`);
+    const why = tr(
+      'Provoz bez odstávek v mrazu: odstavená větev pod 0 °C prakticky neodtává, takže přepínání kapacitu neobnoví.',
+      'Operation without shutdowns in frost: an idle branch below 0 °C hardly defrosts, so switching does not restore the capacity.',
+    );
+    add('ATM_HEATER', 'zvážit', `${why} ${tr('Dohřev nebo třetí větev; rozhodne přepočet výrobce na mrazové období.', 'A trim heater or a third branch; the manufacturer’s re-rating for the frost period decides.')}`);
+    add('FORCED_DRAFT', 'zvážit', `${why} ${tr('Nucený tah zlepší přestup tepla.', 'Forced draft improves heat transfer.')}`);
   }
   if (frost && c.frostWeeks === null)
-    notes.push('Délka mrazového období není zadaná – doplň ji; rozhoduje o jedné vs. přepínaných větvích a patří do poptávky.');
+    notes.push(tr('Délka mrazového období není zadaná – doplň ji; rozhoduje o jedné vs. přepínaných větvích a patří do poptávky.', 'Length of the frost period not set – fill it in; it decides between one and switched branches and belongs in the enquiry.'));
 
   // 2) Dosažitelnost výstupní teploty a přiblížení
   if (!(approach > 0)) {
-    const why = `Při ${fmt1(c.T_des_C)} °C nelze výstupní teploty ${fmt1(c.T_out_C)} °C atmosférickým odpařovačem dosáhnout.`;
-    add('ATM_HEATER', 'doplněk', `${why} Nutný dohřev nebo jiný typ + TSL.`);
-    add('WATER_BATH', 'zvážit', `${why} Zdroj tepla nezávislý na vzduchu.`);
+    const why = tr(
+      `Při ${fmt1(c.T_des_C)} °C nelze výstupní teploty ${fmt1(c.T_out_C)} °C atmosférickým odpařovačem dosáhnout.`,
+      `At ${fmt1(c.T_des_C)} °C an ambient vaporizer cannot reach the outlet temperature ${fmt1(c.T_out_C)} °C.`,
+    );
+    add('ATM_HEATER', 'doplněk', `${why} ${tr('Nutný dohřev nebo jiný typ + TSL.', 'Trim heater or another type + TSL needed.')}`);
+    add('WATER_BATH', 'zvážit', `${why} ${tr('Zdroj tepla nezávislý na vzduchu.', 'Heat source independent of the air.')}`);
   } else if (approach < PRACTICE_APPROACH_K) {
-    const why =
-      `Přiblížení ${fmt1(approach)} K < ${PRACTICE_APPROACH_K} K: orientační rezerva 1,2–1,5× neplatí, ` +
-      'atmosférický odpařovač bývá výrazně větší.';
-    add('ATM_HEATER', 'zvážit', `${why} Nižší T_out + dohřev zmenší atmosférickou část.`);
-    add('FORCED_DRAFT', 'zvážit', `${why} Nucený tah zvýší přestup tepla.`);
-    add('WATER_BATH', 'zvážit', `${why} Vodní lázeň nezávisí na teplotě vzduchu.`);
+    const why = tr(
+      `Přiblížení ${fmt1(approach)} K < ${PRACTICE_APPROACH_K} K: orientační rezerva 1,2–1,5× neplatí, atmosférický odpařovač bývá výrazně větší.`,
+      `Approach ${fmt1(approach)} K < ${PRACTICE_APPROACH_K} K: the rough 1.2–1.5× margin does not apply, the ambient vaporizer is usually much larger.`,
+    );
+    add('ATM_HEATER', 'zvážit', `${why} ${tr('Nižší T_out + dohřev zmenší atmosférickou část.', 'A lower T_out + trim heater reduces the ambient part.')}`);
+    add('FORCED_DRAFT', 'zvážit', `${why} ${tr('Nucený tah zvýší přestup tepla.', 'Forced draft increases heat transfer.')}`);
+    add('WATER_BATH', 'zvážit', `${why} ${tr('Vodní lázeň nezávisí na teplotě vzduchu.', 'A water bath does not depend on the air temperature.')}`);
   }
 
   // 2b) Plánovaný dohřev (očekávaná T_out bez dohřevu nižší než návrhová)
@@ -204,30 +305,37 @@ export function recommendConcept(c: ConceptInput): ConceptRecommendation {
     add(
       'ATM_HEATER',
       'doplněk',
-      `Očekávaná výstupní teplota bez dohřevu ${fmt1(c.T_actual_out_C)} °C je pod návrhovou ${fmt1(c.T_out_C)} °C – dohřev je součástí konceptu.`,
+      tr(
+        `Očekávaná výstupní teplota bez dohřevu ${fmt1(c.T_actual_out_C)} °C je pod návrhovou ${fmt1(c.T_out_C)} °C – dohřev je součástí konceptu.`,
+        `Expected outlet temperature without heater ${fmt1(c.T_actual_out_C)} °C is below the design ${fmt1(c.T_out_C)} °C – a trim heater is part of the concept.`,
+      ),
     );
 
   // 3) Dostupnost
-  if (c.availability === 'N+1') add('N_PLUS_1', 'doplněk', 'Požadovaná dostupnost N+1: záložní větev plné kapacity.');
+  if (c.availability === 'N+1') add('N_PLUS_1', 'doplněk', tr('Požadovaná dostupnost N+1: záložní větev plné kapacity.', 'Required availability N+1: full-capacity standby branch.'));
   if (c.availability === 'backup-heater')
-    add('WATER_BATH', 'doplněk', 'Požadovaná dostupnost: záložní ohřívač (vodní lázeň nebo jiný nezávislý zdroj tepla).');
+    add('WATER_BATH', 'doplněk', tr('Požadovaná dostupnost: záložní ohřívač (vodní lázeň nebo jiný nezávislý zdroj tepla).', 'Required availability: backup heater (water bath or another independent heat source).'));
 
   // 4) Tři varianty (a)/(b)/(c)
   let threeVariants: ThreeVariants | null = null;
   if (c.TSL_C !== null && approach < PRACTICE_APPROACH_K && c.T_out_C - c.TSL_C < c.TSL_margin_K) {
     threeVariants = {
-      why:
-        `Přiblížení ${fmt1(approach)} K < ${PRACTICE_APPROACH_K} K a zároveň rezerva T_out − TSL = ${fmt1(c.T_out_C - c.TSL_C)} K ` +
-        `< požadovaných ${fmt1(c.TSL_margin_K)} K.`,
+      why: tr(
+        `Přiblížení ${fmt1(approach)} K < ${PRACTICE_APPROACH_K} K a zároveň rezerva T_out − TSL = ${fmt1(c.T_out_C - c.TSL_C)} K < požadovaných ${fmt1(c.TSL_margin_K)} K.`,
+        `Approach ${fmt1(approach)} K < ${PRACTICE_APPROACH_K} K and at the same time margin T_out − TSL = ${fmt1(c.T_out_C - c.TSL_C)} K < required ${fmt1(c.TSL_margin_K)} K.`,
+      ),
       variants: [
-        { key: 'a', text: 'větší odpařovač' },
-        { key: 'b', text: 'nižší T_out + dohřev' },
+        { key: 'a', text: tr('větší odpařovač', 'a larger vaporizer') },
+        { key: 'b', text: tr('nižší T_out + dohřev', 'a lower T_out + trim heater') },
         {
           key: 'c',
-          text: 'první úsek potrubí z nerezu nebo nízkoteplotní oceli, takže lze nižší mez potrubí i nižší TSL',
+          text: tr(
+            'první úsek potrubí z nerezu nebo nízkoteplotní oceli, takže lze nižší mez potrubí i nižší TSL',
+            'a first piping section of stainless or low-temperature steel, allowing a lower piping limit and a lower TSL',
+          ),
         },
       ],
-      note: 'Rozhodnutí patří do analýzy rizik.',
+      note: tr('Rozhodnutí patří do analýzy rizik.', 'The decision belongs in the risk analysis.'),
     };
   }
 

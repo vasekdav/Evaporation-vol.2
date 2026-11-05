@@ -6,6 +6,7 @@ import type { CatalogBasis } from '../core/catalog';
 import type { DesignInput } from '../core/input';
 import type { InquiryOverrides } from '../core/inquiry';
 import { sanitizeBasis, sanitizeInput } from '../core/restore';
+import { tr } from '../core/i18n';
 
 export const CASE_SCHEMA = 1;
 export const CASE_APP = 'odparovac';
@@ -46,13 +47,13 @@ export function parseCase(text: string): ParsedCase {
   try {
     data = JSON.parse(text);
   } catch {
-    return { ok: false, reason: 'Soubor není platný JSON.' };
+    return { ok: false, reason: tr('Soubor není platný JSON.', 'The file is not valid JSON.') };
   }
-  if (!data || typeof data !== 'object') return { ok: false, reason: 'Soubor neobsahuje případ.' };
+  if (!data || typeof data !== 'object') return { ok: false, reason: tr('Soubor neobsahuje případ.', 'The file does not contain a case.') };
   const c = data as Partial<CaseFile>;
-  if (c.app !== CASE_APP) return { ok: false, reason: 'Soubor není případ této aplikace.' };
+  if (c.app !== CASE_APP) return { ok: false, reason: tr('Soubor není případ této aplikace.', 'The file is not a case of this application.') };
   if (typeof c.schema !== 'number' || c.schema > CASE_SCHEMA)
-    return { ok: false, reason: `Nepodporovaná verze souboru (${String(c.schema)}).` };
+    return { ok: false, reason: tr(`Nepodporovaná verze souboru (${String(c.schema)}).`, `Unsupported file version (${String(c.schema)}).`) };
   const input = sanitizeInput(c.input);
   const customBasis = c.customBasis ? sanitizeBasis(c.customBasis) : null;
   const inquiry: Record<string, string> = {};
@@ -85,7 +86,7 @@ export function caseFromParam(param: string): ParsedCase {
   try {
     return parseCase(fromBase64Url(param));
   } catch {
-    return { ok: false, reason: 'Odkaz je poškozený.' };
+    return { ok: false, reason: tr('Odkaz je poškozený.', 'The link is corrupted.') };
   }
 }
 
