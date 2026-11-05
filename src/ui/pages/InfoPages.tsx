@@ -239,6 +239,12 @@ export function SourcesPage() {
         <p className="note">
           Data výrobců v aplikaci jsou ilustrativní a editovatelná. Vždy ověř v aktuálním katalogu; výběr a garance patří výrobci.
         </p>
+        <p className="note">
+          Knihovny třetích stran a jejich licence (React, pdfmake s písmem Roboto, ExcelJS aj.):{' '}
+          <a href="third-party-licenses.txt" target="_blank" rel="noreferrer noopener">
+            third-party-licenses.txt
+          </a>
+        </p>
       </section>
     </div>
   );

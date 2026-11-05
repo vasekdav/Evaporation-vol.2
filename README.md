@@ -149,6 +149,19 @@ neextrapoluje: provider vyhodí `PropertyRangeError` a kontroly výsledek zablok
   z LOX/LIN nepřepočítává; LAR lze doplnit do `src/data/catalog/models.json`.
 - Jádro (výkon, velikost, kontroly, koncept) se pro Ar neměnilo – přibyla jen data, texty a testy.
 
+## Nezávislá odborná kontrola (0.6.0)
+
+Aplikaci prošlo pět nezávislých posuzovatelů (fyzika, praxe, bezpečnost, UX, software). Nálezy
+a jejich vyřešení: [`docs/nezavisla-kontrola-2026-11.md`](docs/nezavisla-kontrola-2026-11.md).
+Hlavní změny proti zadání:
+
+- K1–K8 doplňují kontroly **D1–D4** (úplnost TSL / T_min, úsek před dohřevem, věrohodnost modelu,
+  provoz vs. katalogový základ).
+- Věta o stavu výsledku je rozšířená: **„Neúplné – chybí: …“** a **„Výkon platný, ale NÁVRH
+  NEVYHOVUJE – TSL / křehký lom“** s uvedením důvodu.
+- K6 hlídá i fyzikální mez: při T_des ≤ mez potrubí je výstup v mrazu nutně pod mezí.
+- Sdílitelný odkaz nese data ve fragmentu `#case=…` (neposílá se na server).
+
 ## Poznámky k zadání zjištěné při ověřování
 
 - Katalogový tlak Chart SuperGap EU „15 bar“ je **předpokládán jako přetlak** (16,01325 bar a),

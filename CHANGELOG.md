@@ -2,6 +2,24 @@
 
 Verze se zobrazuje v reportu (fáze 4).
 
+## 0.6.0 – opravy po nezávislé odborné kontrole
+
+Pět nezávislých posuzovatelů (fyzika, praxe, bezpečnost, UX, software) – podrobně
+v `docs/nezavisla-kontrola-2026-11.md`.
+
+- Bezpečnost: K6 hlídá mráz pod mezí potrubí, TSL = mez → POZOR, doplňkové kontroly D1–D4
+  (úplnost, úsek před dohřevem, věrohodnost, provoz vs. katalog), stav „Neúplné“ a důvod
+  nevyhovění ve větě o stavu; výhrada HAZOP / SIL v reportu.
+- Fyzika: křivka tání (Ar), opravené tvrzení o LMTD, objem spotřeby i při 1,01325 bar,
+  meze věrohodnosti vstupů.
+- Praxe: k násobí N_eq (ne průtok), pásmo praxe u modelů, doba provozu katalogu,
+  kontrola stávajícího odpařovače (S3), rozšířená poptávka (pojistné ventily, garanční věta,
+  délka cyklu, prostor, požadavky na TSL…), doplněný postup návrhu.
+- UX: dotykové cíle ≥ 44 px, chyby u polí, odkazy na důvody stavu, obsah stránky,
+  typografické minus, pushState a fokus, klávesnice u přepínačů, stav kroků postupu.
+- Software: hloubková validace uložených dat, ErrorBoundary, odkaz `#case=`, CSP a další
+  hlavičky, override `uuid`, soupis licencí, `engines`.
+
 ## 0.5.0 – fáze 5: argon
 
 - Argon (Tegeler et al. 1999): tabulky z CoolProp 7.2.0, rozsah 1–40 bar a, kapalina od −189 °C, výchozí −186 °C,
